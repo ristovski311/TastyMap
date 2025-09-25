@@ -1,29 +1,18 @@
 package com.example.tastymap.ui.login
 
-import android.widget.Space
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
+import androidx.compose.foundation.layout.*
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.*
 import androidx.compose.ui.unit.dp
-import androidx.compose.material3.Button
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
-import com.example.tastymap.ui.theme.TastyMapTheme
 
 @Composable
-fun LoginScreen() {
+fun LoginScreen(
+    onLoginClick: (String, String) -> Unit,
+    onRegisterClick: (String, String) -> Unit,
+) {
+    var email by remember { mutableStateOf("") }
+    var password by remember { mutableStateOf("") }
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -32,8 +21,8 @@ fun LoginScreen() {
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         OutlinedTextField(
-            value = "",
-            onValueChange = { /*TODO: Napravi email onvaluechange*/ },
+            value = email,
+            onValueChange = { email = it },
             label = { Text("Email") },
             modifier = Modifier.fillMaxWidth()
         );
@@ -41,37 +30,29 @@ fun LoginScreen() {
             modifier = Modifier.height(8.dp)
         );
         OutlinedTextField(
-            value = "",
-            onValueChange = { /*TODO: Napravi onvaluechanged pass*/},
-            label = {Text("Password")},
+            value = password,
+            onValueChange = { password = it },
+            label = { Text("Password") },
             modifier = Modifier.fillMaxWidth()
         );
         Spacer(
             modifier = Modifier.height(8.dp)
         );
         Button(
-            onClick = { /*TODO: login logika*/},
+            onClick = { onLoginClick(email, password) },
             modifier = Modifier.fillMaxWidth()
-        ){
+        ) {
             Text("Login")
         };
         Spacer(
             modifier = Modifier.height(8.dp)
         );
         TextButton(
-            onClick = { /*TODO: Registracija logika*/}
+            onClick = { onRegisterClick(email, password) }
         )
         {
             Text("Register")
         }
-    }
-}
-
-@Composable
-fun LoginScreenPreview()
-{
-    TastyMapTheme {
-        LoginScreen()
     }
 }
 
