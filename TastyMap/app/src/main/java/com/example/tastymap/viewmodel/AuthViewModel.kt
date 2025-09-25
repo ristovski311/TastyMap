@@ -10,10 +10,14 @@ import com.google.firebase.ktx.Firebase
 import com.example.tastymap.model.User
 
 class AuthViewModel : ViewModel() {
-    private var auth: FirebaseAuth = Firebase.auth
+    var auth: FirebaseAuth = Firebase.auth
     private val db = Firebase.firestore
 
     fun loginUser(context: Context, email: String, password: String, onLoginSuccess: () -> Unit) {
+        if(email.isBlank() || password.isBlank()) {
+            showToast(context, "Molimo unesite email i lozinku!");
+            return
+        }
         auth.signInWithEmailAndPassword(email, password)
             .addOnCompleteListener { task ->
                 if (task.isSuccessful) {
@@ -27,6 +31,10 @@ class AuthViewModel : ViewModel() {
     }
 
     fun registerUser(context: Context, email: String, password: String, onRegisterSuccess: () -> Unit) {
+        if(email.isBlank() || password.isBlank()) {
+            showToast(context, "Molimo unesite email i lozinku!");
+            return
+        }
         auth.createUserWithEmailAndPassword(email, password)
             .addOnCompleteListener { task ->
                 if (task.isSuccessful) {
@@ -52,6 +60,49 @@ class AuthViewModel : ViewModel() {
                     showToast(context, "Neuspesna registracija: ${task.exception?.message}")
                 }
             }
+    }
+
+    fun saveUserData(context: Context, name: String, phone: String, onDataSaved: () -> Unit) {
+        val user = auth.currentUser
+        if(user!=null){
+            val userMap = hashMapOf<String, Any>(
+                "name" to name,
+                "phone" to phone
+            )
+
+            db.collection("users").document(user.uid)
+                .update(userMap)
+                .addOnSuccessListener {
+                    showToast(context, "Podaci su sacuvani!")
+                    onDataSaved()
+                }
+                .addOnFailureListener { e ->
+                    showToast(context, "Greska pri cuvanju podataka: ${e.message}")
+                }
+        }
+    }
+
+    fun fetchUserData(onSuccess: (User) -> Unit){
+        val user = auth.currentUser
+        if(user != null)
+        {
+            db.collection("users").document(user.uid).get()
+                .addOnSuccessListener { document ->
+                    if(document.exists()){
+                        val userData = document.toObject(User::class.java)
+                        if(userData != null)
+                        {
+                            onSuccess(userData)
+                        }
+                    }
+
+                }
+        }
+    }
+
+    fun logout()
+    {
+        auth.signOut()
     }
 
     private fun showToast(context: Context, msg: String) {

@@ -32,7 +32,7 @@ fun LoginScreen(
         OutlinedTextField(
             value = password,
             onValueChange = { password = it },
-            label = { Text("Password") },
+            label = { Text("Lozinka") },
             modifier = Modifier.fillMaxWidth()
         );
         Spacer(
@@ -42,7 +42,7 @@ fun LoginScreen(
             onClick = { onLoginClick(email, password) },
             modifier = Modifier.fillMaxWidth()
         ) {
-            Text("Login")
+            Text("Prijavi se")
         };
         Spacer(
             modifier = Modifier.height(8.dp)
@@ -51,7 +51,7 @@ fun LoginScreen(
             onClick = { onRegisterClick(email, password) }
         )
         {
-            Text("Register")
+            Text("Registruj se")
         }
     }
 }
