@@ -27,6 +27,7 @@ import com.google.firebase.auth.ktx.auth
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.tastymap.ui.main.MainScreen
 import com.example.tastymap.ui.register.RegisterScreen
 
 class MainActivity : ComponentActivity() {
@@ -34,59 +35,48 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         val auth = Firebase.auth
 
-        setContent()
-        {
+        setContent {
             TastyMapTheme {
-                val navController = rememberNavController()
-                val authViewModel: AuthViewModel = viewModel()
-                val context = LocalContext.current
-                val startDestination =
-                    if (auth.currentUser != null) "profile_screen" else "login_screen"
-                LaunchedEffect(Unit) {
-                    if (auth.currentUser != null)
-                        navController.navigate("profile_screen") {
-                            popUpTo("login_screen") { inclusive = true }
-                        }
-                }
+                Scaffold { paddingValues ->
+                    val navController = rememberNavController()
+                    val authViewModel: AuthViewModel = viewModel()
+                    val context = LocalContext.current
+                    val startDestination =
+                        if (auth.currentUser != null) "main_screen" else "login_screen"
 
-                NavHost(navController = navController, startDestination = startDestination) {
-                    composable("login_screen") {
-                        LoginScreen(
-                            onLoginClick = { email, pass ->
-                                authViewModel.loginUser(
-                                    context,
-                                    email,
-                                    pass
-                                ) {
-                                    navController.navigate("profile_screen") {
-                                        popUpTo("login_screen") { inclusive = true }
+                    NavHost(
+                        navController = navController,
+                        startDestination = startDestination,
+                        modifier = Modifier.padding(paddingValues)
+                    ) {
+                        composable("login_screen") {
+                            LoginScreen(
+                                onLoginClick = { email, pass ->
+                                    authViewModel.loginUser(context, email, pass) {
+                                        navController.navigate("main_screen") {
+                                            popUpTo("login_screen") { inclusive = true }
+                                        }
                                     }
-                                }
-                            },
-                            onRegisterClick = { email, pass ->
-                                authViewModel.registerUser(
-                                    context,
-                                    email,
-                                    pass,
-                                ) {
+                                },
+                                onRegisterClick = {
                                     navController.navigate("register_screen")
+                                },
+                            )
+                        }
+                        composable("register_screen") {
+                            RegisterScreen(authViewModel) {
+                                navController.navigate("main_screen") {
+                                    popUpTo("register_screen") { inclusive = true }
                                 }
-                            },
-                        )
-                    }
-                    composable("register_screen") {
-                        RegisterScreen(authViewModel) {
-                            navController.navigate("profile_screen") {
-                                popUpTo("register_screen") { inclusive = true }
                             }
                         }
-                    }
-                    composable("profile_screen") {
-                        ProfileScreen(authViewModel, onLogout = {
-                            navController.navigate("login_screen") {
-                                popUpTo("profile_screen") { inclusive = true }
+                        composable("main_screen") {
+                            MainScreen(authViewModel = authViewModel) {
+                                navController.navigate("login_screen") {
+                                    popUpTo("main_screen") { inclusive = true }
+                                }
                             }
-                        })
+                        }
                     }
                 }
             }

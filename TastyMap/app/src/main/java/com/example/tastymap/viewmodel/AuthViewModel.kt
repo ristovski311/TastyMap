@@ -30,7 +30,7 @@ class AuthViewModel : ViewModel() {
             }
     }
 
-    fun registerUser(context: Context, email: String, password: String, onRegisterSuccess: () -> Unit) {
+    fun registerUser(context: Context, email: String, password: String, name: String, phone: String, onRegisterSuccess: () -> Unit) {
         if(email.isBlank() || password.isBlank()) {
             showToast(context, "Molimo unesite email i lozinku!");
             return
@@ -42,8 +42,8 @@ class AuthViewModel : ViewModel() {
                     user?.let {
                         val userData = hashMapOf(
                             "email" to email,
-                            "name" to "Ime Korisnika",
-                            "phone" to "Broj telefona",
+                            "name" to name,
+                            "phone" to phone,
                             "profilePictureUrl" to "URL fotografije"
                         )
                         db.collection("users").document(it.uid)
@@ -105,7 +105,7 @@ class AuthViewModel : ViewModel() {
         auth.signOut()
     }
 
-    private fun showToast(context: Context, msg: String) {
+    fun showToast(context: Context, msg: String) {
         Toast.makeText(context, msg, Toast.LENGTH_LONG).show()
     }
 }

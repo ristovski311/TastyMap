@@ -1,15 +1,17 @@
 package com.example.tastymap.ui.login
 
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.*
 import androidx.compose.ui.unit.dp
+import com.example.tastymap.ui.theme.TastyMapTheme
 
 @Composable
 fun LoginScreen(
     onLoginClick: (String, String) -> Unit,
-    onRegisterClick: (String, String) -> Unit,
+    onRegisterClick: () -> Unit,
 ) {
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
@@ -48,7 +50,7 @@ fun LoginScreen(
             modifier = Modifier.height(8.dp)
         );
         TextButton(
-            onClick = { onRegisterClick(email, password) }
+            onClick = { onRegisterClick() }
         )
         {
             Text("Registruj se")

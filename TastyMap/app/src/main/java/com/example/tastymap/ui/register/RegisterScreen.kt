@@ -15,6 +15,8 @@ fun RegisterScreen(
     authViewModel: AuthViewModel,
     onRegistrationSuccess: () -> Unit
 ) {
+    var email by remember {mutableStateOf("")}
+    var password by remember {mutableStateOf("")}
     var name by remember {mutableStateOf("")}
     var phone by remember {mutableStateOf("")}
 
@@ -26,7 +28,7 @@ fun RegisterScreen(
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Text("Registruj profil")
+        Text("Registracija")
         Spacer(
             modifier = Modifier.height(16.dp)
         )
@@ -48,10 +50,30 @@ fun RegisterScreen(
         Spacer(
             modifier = Modifier.height(8.dp)
         )
+        OutlinedTextField(
+            value = email,
+            onValueChange = {email = it},
+            label = { Text("Email") },
+            modifier = Modifier.fillMaxWidth()
+        )
+        Spacer(
+            modifier = Modifier.height(8.dp),
+        )
+        OutlinedTextField(
+            value = password,
+            onValueChange = { password = it},
+            label = { Text("Lozinka") },
+            modifier = Modifier.fillMaxWidth()
+        )
+        Spacer(
+            modifier = Modifier.height(8.dp)
+        )
         Button(
             onClick = {
-                authViewModel.saveUserData(context, name, phone){
-                    onRegistrationSuccess()
+                if(email.isNotBlank() && password.isNotBlank() && name.isNotBlank() && phone.isNotBlank()){
+                    authViewModel.registerUser(context, email, password, name, phone) {
+                        onRegistrationSuccess()
+                    }
                 }
             },
             modifier = Modifier.fillMaxWidth()
