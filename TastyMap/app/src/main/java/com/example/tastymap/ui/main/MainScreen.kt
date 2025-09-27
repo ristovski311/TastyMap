@@ -106,7 +106,6 @@ fun MainScreen(
             composable(NavGraph.Profile.route) {
                 ProfileScreen(
                     authViewModel = authViewModel,
-                    onLogout = onLogout
                 )
             }
         }
@@ -115,7 +114,7 @@ fun MainScreen(
         AlertDialog(
             onDismissRequest = { showLogoutDialog = false },
             title = { Text("Potvrdite odjavu") },
-            text = { Text("Da li ste sigurni da zelite da se odjavite?") },
+            text = { Text("Da li ste sigurni da želite da se odjavite?") },
             confirmButton = {
                 TextButton(
                     onClick = {
@@ -131,7 +130,7 @@ fun MainScreen(
                 TextButton(
                     onClick = { showLogoutDialog = false }
                 ) {
-                    Text("Otkazi")
+                    Text("Otkaži")
                 }
             }
         )

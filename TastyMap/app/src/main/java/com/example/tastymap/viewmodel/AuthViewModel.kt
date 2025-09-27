@@ -44,7 +44,8 @@ class AuthViewModel : ViewModel() {
                             "email" to email,
                             "name" to name,
                             "phone" to phone,
-                            "profilePictureUrl" to "URL fotografije"
+                            "profilePicture" to "URL fotografije",
+                            "points" to 0
                         )
                         db.collection("users").document(it.uid)
                             .set(userData)
@@ -79,6 +80,31 @@ class AuthViewModel : ViewModel() {
                 .addOnFailureListener { e ->
                     showToast(context, "Greska pri cuvanju podataka: ${e.message}")
                 }
+        }
+    }
+
+    fun updateUserData(context: Context, name: String, phone: String, onResult: (Boolean) -> Unit) {
+        val user = auth.currentUser
+        if(user!=null){
+            val userMap = hashMapOf<String, Any>(
+                "name" to name,
+                "phone" to phone
+            )
+
+            db.collection("users").document(user.uid)
+                .update(userMap)
+                .addOnSuccessListener {
+                    showToast(context, "Podaci su ažurirani!")
+                    onResult(true)
+                }
+                .addOnFailureListener { e ->
+                    showToast(context, "Greška pri ažuriranju podataka: ${e.message}")
+                    onResult(false)
+                }
+        }
+        else{
+            showToast(context, "Korisnik nije prijavljen!")
+            onResult(false)
         }
     }
 

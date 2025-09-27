@@ -1,19 +1,25 @@
 package com.example.tastymap.ui.register
 
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState // Za stanje skrolovanja
+import androidx.compose.foundation.verticalScroll // Za omogućavanje skrolovanja
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.painterResource // Za učitavanje slike
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.example.tastymap.R // Pretpostavka za logo_sliku
 import com.example.tastymap.viewmodel.AuthViewModel
 
 @Composable
 fun RegisterScreen(
     authViewModel: AuthViewModel,
-    onRegistrationSuccess: () -> Unit
+    onRegistrationSuccess: () -> Unit,
+    onNavigateToLogin: () -> Unit
 ) {
     var email by remember {mutableStateOf("")}
     var password by remember {mutableStateOf("")}
@@ -21,16 +27,24 @@ fun RegisterScreen(
     var phone by remember {mutableStateOf("")}
 
     val context = LocalContext.current
+    val scrollState = rememberScrollState()
+
     Column(
         modifier = Modifier
             .fillMaxSize()
+            .verticalScroll(scrollState)
+            .imePadding()
             .padding(16.dp),
-        verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Text("Registracija")
-        Spacer(
-            modifier = Modifier.height(16.dp)
+        Image(
+            painter = painterResource(
+                id = if (isSystemInDarkTheme()) R.drawable.illustration_login else R.drawable.illustration_login_light
+            ),
+            contentDescription = "Logo aplikacije",
+            modifier = Modifier
+                .size(400.dp)
+                .padding(top = 16.dp, bottom = 16.dp)
         )
         OutlinedTextField(
             value = name,
@@ -78,7 +92,12 @@ fun RegisterScreen(
             },
             modifier = Modifier.fillMaxWidth()
         ){
-            Text("Sacuvaj")
+            Text("Registruj se")
+        }
+        TextButton(
+            onClick = onNavigateToLogin
+        ){
+            Text("Imate nalog? Prijavite se.")
         }
     }
 }

@@ -59,16 +59,26 @@ class MainActivity : ComponentActivity() {
                                     }
                                 },
                                 onRegisterClick = {
-                                    navController.navigate("register_screen")
+                                    navController.navigate("register_screen") {
+                                        popUpTo("login_screen") { inclusive = true }
+                                    }
                                 },
                             )
                         }
-                        composable("register_screen") {
-                            RegisterScreen(authViewModel) {
-                                navController.navigate("main_screen") {
-                                    popUpTo("register_screen") { inclusive = true }
+                        composable(route = "register_screen") {
+                            RegisterScreen(
+                                authViewModel,
+                                onRegistrationSuccess = {
+                                    navController.navigate("main_screen") {
+                                        popUpTo("register_screen") { inclusive = true }
+                                    }
+                                },
+                                onNavigateToLogin = {
+                                    navController.navigate("login_screen") {
+                                        popUpTo("register_screen") { inclusive = true }
+                                    }
                                 }
-                            }
+                            )
                         }
                         composable("main_screen") {
                             MainScreen(authViewModel = authViewModel) {
