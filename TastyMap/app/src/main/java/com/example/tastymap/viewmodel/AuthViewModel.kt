@@ -108,7 +108,7 @@ class AuthViewModel : ViewModel() {
         }
     }
 
-    fun fetchUserData(onSuccess: (User) -> Unit){
+    fun fetchCurrentUserData(onSuccess: (User) -> Unit){
         val user = auth.currentUser
         if(user != null)
         {

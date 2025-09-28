@@ -3,16 +3,16 @@ package com.example.tastymap.ui.register
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.rememberScrollState // Za stanje skrolovanja
-import androidx.compose.foundation.verticalScroll // Za omogućavanje skrolovanja
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.*
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.painterResource // Za učitavanje slike
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-import com.example.tastymap.R // Pretpostavka za logo_sliku
+import com.example.tastymap.R
 import com.example.tastymap.viewmodel.AuthViewModel
 
 @Composable

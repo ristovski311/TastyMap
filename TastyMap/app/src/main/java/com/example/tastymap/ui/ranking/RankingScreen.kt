@@ -39,7 +39,9 @@ import androidx.compose.ui.unit.dp
 import com.example.tastymap.R
 
 @Composable
-fun RankingScreen() {
+fun RankingScreen(
+    onNavigateToUserProfile: (String) -> Unit
+) {
 
     val rankingViewModel: RankingViewModel = viewModel()
 
@@ -98,7 +100,9 @@ fun RankingScreen() {
                     )
                 }
                 itemsIndexed(users) { index, user ->
-                    RankingItem(index, user)
+                    RankingItem(index, user) { userId ->
+                        onNavigateToUserProfile(userId)
+                    }
                 }
             }
 
@@ -111,7 +115,8 @@ fun RankingScreen() {
 @Composable
 fun RankingItem(
     index: Int,
-    user: User
+    user: User,
+    onUserClick: (String) -> Unit
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -122,7 +127,10 @@ fun RankingItem(
                 2 -> MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.5f)
                 else -> MaterialTheme.colorScheme.surfaceVariant
             }
-        )
+        ),
+        onClick = {
+            onUserClick(user.uid)
+        }
     ) {
         Row(
             modifier = Modifier
@@ -162,7 +170,7 @@ fun RankingItem(
                 ) {
 
                     Text(
-                        text = user.name ?: "wtf",
+                        text = user.name ?: "",
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.SemiBold,
                         color = MaterialTheme.colorScheme.onSurface

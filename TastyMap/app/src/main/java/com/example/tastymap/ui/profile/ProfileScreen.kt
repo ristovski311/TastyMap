@@ -16,10 +16,13 @@ import androidx.compose.ui.unit.dp
 import com.example.tastymap.model.User
 import com.example.tastymap.viewmodel.AuthViewModel
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.sp
+import com.example.tastymap.viewmodel.UserViewModel
 
 
 @Composable
@@ -32,7 +35,7 @@ fun ProfileScreen(
     var showEditDialog by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
-        authViewModel.fetchUserData { fetcheduser ->
+        authViewModel.fetchCurrentUserData { fetcheduser ->
             user = fetcheduser
             isLoading = false
         }
@@ -51,74 +54,81 @@ fun ProfileScreen(
         floatingActionButtonPosition = FabPosition.End
     ) { padding ->
 
-        if(showEditDialog && user != null){
+        if (showEditDialog && user != null) {
             EditProfileDialog(
                 currentUser = user!!,
                 authViewModel = authViewModel,
-                onDismiss = {showEditDialog = false},
+                onDismiss = { showEditDialog = false },
                 onSuccess = {
                     showEditDialog = false
-                    authViewModel.fetchUserData {
-                        fetchedUser -> user = fetchedUser
+                    authViewModel.fetchCurrentUserData { fetchedUser ->
+                        user = fetchedUser
                     }
                 }
             )
         }
+        UserContent(padding, user)
+    }
+}
 
-        Column(
+@Composable
+fun UserContent(
+    padding: PaddingValues,
+    user: User?
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(padding)
+            .padding(8.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        //Slika
+        Spacer(
+            modifier = Modifier.height(48.dp)
+        )
+        Card(
+            shape = CircleShape,
             modifier = Modifier
-                .fillMaxSize()
-                .padding(padding)
-                .padding(8.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
+                .size(120.dp),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.primaryContainer
+            )
         ) {
-            //Slika
-            Spacer(
-                modifier = Modifier.height(48.dp)
-            )
-            Card(
-                shape = CircleShape,
+            Image(
+                painter = rememberVectorPainter(Icons.Filled.Person),
+                contentDescription = "Profilna slika",
                 modifier = Modifier
-                    .size(120.dp),
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.primaryContainer
-                )
-            ) {
-                Image(
-                    painter = rememberVectorPainter(Icons.Filled.Person),
-                    contentDescription = "Profilna slika",
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(20.dp)
-                )
-            }
-            Spacer(
-                modifier = Modifier.height(24.dp)
-            )
-            //Ime
-            Text(
-                text = user?.name ?: "Korisnik",
-                style = MaterialTheme.typography.headlineLarge,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onBackground
-            )
-            Spacer(
-                modifier = Modifier.height(8.dp)
-            )
-            //Email i telefon
-            Text(
-                text = "${user?.email ?: "email"} | ${user?.phone ?: "phone"}",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-            Spacer(
-                modifier = Modifier.height(16.dp)
-            )
-            //Poeni
-            ProgressBar(
-                user ?: User()
+                    .fillMaxSize()
+                    .padding(20.dp)
             )
         }
+        Spacer(
+            modifier = Modifier.height(24.dp)
+        )
+        //Ime
+        Text(
+            text = user?.name ?: "Korisnik",
+            style = MaterialTheme.typography.headlineLarge,
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.onBackground
+        )
+        Spacer(
+            modifier = Modifier.height(8.dp)
+        )
+        //Email i telefon
+        Text(
+            text = "${user?.email ?: "email"} | ${user?.phone ?: "phone"}",
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+        Spacer(
+            modifier = Modifier.height(16.dp)
+        )
+        //Poeni
+        ProgressBar(
+            user ?: User()
+        )
     }
 }
 
@@ -228,14 +238,14 @@ fun EditProfileDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = {Text("Izmenite podatke")},
+        title = { Text("Izmenite podatke") },
         text = {
             Column(
                 modifier = Modifier.padding(top = 16.dp)
             ) {
                 OutlinedTextField(
                     value = name,
-                    onValueChange = {name = it},
+                    onValueChange = { name = it },
                     label = { Text("Ime") },
                     modifier = Modifier.fillMaxWidth()
                 )
@@ -244,7 +254,7 @@ fun EditProfileDialog(
                 )
                 OutlinedTextField(
                     value = phone,
-                    onValueChange = {phone = it},
+                    onValueChange = { phone = it },
                     label = { Text("Telefon") },
                     modifier = Modifier.fillMaxWidth()
                 )
@@ -253,18 +263,15 @@ fun EditProfileDialog(
         confirmButton = {
             Button(
                 onClick = {
-                    if(name.isNotBlank() && phone.isNotBlank()) {
-                        authViewModel.updateUserData(context, name, phone) {
-                            success ->
-                            if(success){
+                    if (name.isNotBlank() && phone.isNotBlank()) {
+                        authViewModel.updateUserData(context, name, phone) { success ->
+                            if (success) {
                                 onSuccess()
-                            }
-                            else {
+                            } else {
                                 authViewModel.showToast(context, "Greška pri ažuriranju podataka!")
                             }
                         }
-                    }
-                    else {
+                    } else {
                         authViewModel.showToast(context, "Polja ne smeju biti prazna!")
                     }
                 }
@@ -278,4 +285,51 @@ fun EditProfileDialog(
             }
         }
     )
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun OtherUserProfileScreen(
+    userId: String,
+    userViewModel: UserViewModel,
+    onBackClick: () -> Unit
+) {
+    var userProfile by remember { mutableStateOf<User?>(null) }
+    var isLoading by remember { mutableStateOf(true) }
+
+    LaunchedEffect(userId) {
+        userViewModel.fetchUserData(userId) { user ->
+            userProfile = user
+            isLoading = false
+        }
+    }
+
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = {Text("Korisnik")},
+                navigationIcon = {
+                    IconButton(onClick = onBackClick) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = "Nazad"
+                        )
+                    }
+                }
+            )
+        }
+    ) {
+        padding ->
+        when{
+            isLoading -> {
+                CircularProgressIndicator(Modifier.fillMaxSize().wrapContentSize(Alignment.Center))
+            }
+            userProfile == null -> {
+                Text("Korisnik nije pronadjen!", Modifier.fillMaxSize().wrapContentSize(Alignment.Center))
+            }
+            else -> {
+                UserContent(padding = padding, user = userProfile!!)
+            }
+        }
+    }
 }

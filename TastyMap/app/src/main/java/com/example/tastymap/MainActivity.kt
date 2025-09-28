@@ -27,8 +27,14 @@ import com.google.firebase.auth.ktx.auth
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.navArgument
 import com.example.tastymap.ui.main.MainScreen
 import com.example.tastymap.ui.register.RegisterScreen
+import com.example.tastymap.ui.NavGraph
+import androidx.navigation.NavType
+import com.example.tastymap.ui.profile.OtherUserProfileScreen
+import com.example.tastymap.viewmodel.UserViewModel
+
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -81,11 +87,36 @@ class MainActivity : ComponentActivity() {
                             )
                         }
                         composable("main_screen") {
-                            MainScreen(authViewModel = authViewModel) {
-                                navController.navigate("login_screen") {
-                                    popUpTo("main_screen") { inclusive = true }
+                            MainScreen(
+                                authViewModel = authViewModel,
+                                onNavigateToUserProfile = {
+                                    userId ->
+                                    navController.navigate(NavGraph.createOtherUserProfileRoute(userId))
+                                },
+                                onLogout = {
+                                    navController.navigate("login_screen") {
+                                        popUpTo("main_screen") { inclusive = true }
+                                    }
                                 }
-                            }
+                            )
+                        }
+                        composable(
+                            route = NavGraph.OtherUserProfile.route,
+                            arguments = listOf(
+                                navArgument("userId") { type = NavType.StringType }
+                            ),
+                        ) {
+                            backStackEntry ->
+                            val userId = backStackEntry.arguments?.getString("userId") ?: return@composable
+                            var userViewModel : UserViewModel = viewModel()
+
+                            OtherUserProfileScreen(
+                                userId = userId,
+                                userViewModel = userViewModel,
+                                onBackClick = {
+                                    navController.popBackStack()
+                                }
+                            )
                         }
                     }
                 }

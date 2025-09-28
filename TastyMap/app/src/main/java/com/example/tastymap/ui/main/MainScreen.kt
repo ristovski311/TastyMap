@@ -27,6 +27,7 @@ import com.example.tastymap.ui.ranking.RankingScreen
 @Composable
 fun MainScreen(
     authViewModel: AuthViewModel,
+    onNavigateToUserProfile: (String) -> Unit,
     onLogout: () -> Unit
 ) {
     val colorScheme = MaterialTheme.colorScheme
@@ -42,9 +43,9 @@ fun MainScreen(
 
     fun getCurrentTitle() : String {
         return when(currentRoute){
-            NavGraph.Map.route -> NavGraph.Map.title
-            NavGraph.Ranking.route -> NavGraph.Ranking.title
-            NavGraph.Profile.route -> NavGraph.Profile.title
+            NavGraph.Map.route -> NavGraph.Map.title!!
+            NavGraph.Ranking.route -> NavGraph.Ranking.title!!
+            NavGraph.Profile.route -> NavGraph.Profile.title!!
             else -> "TastyMap"
         }
     }
@@ -74,8 +75,8 @@ fun MainScreen(
             ) {
                 NavGraph.getBottomNavRoutes().forEach { screen ->
                     NavigationBarItem(
-                        icon = { Icon(screen.icon, contentDescription = null) },
-                        label = { Text(screen.title) },
+                        icon = { Icon(screen.icon!!, contentDescription = null) },
+                        label = { Text(screen.title!!) },
                         selected = currentDestination?.hierarchy?.any { it.route == screen.route } == true,
                         onClick = {
                             bottomNavController.navigate(screen.route) {
@@ -102,7 +103,11 @@ fun MainScreen(
             modifier = Modifier.padding(innerPadding)
         ) {
             composable(NavGraph.Map.route) { MapScreen() }
-            composable(NavGraph.Ranking.route) { RankingScreen() }
+            composable(NavGraph.Ranking.route) {
+                RankingScreen(
+                    onNavigateToUserProfile = onNavigateToUserProfile
+                )
+            }
             composable(NavGraph.Profile.route) {
                 ProfileScreen(
                     authViewModel = authViewModel,
