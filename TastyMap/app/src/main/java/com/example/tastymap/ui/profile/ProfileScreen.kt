@@ -83,7 +83,6 @@ fun UserContent(
             .padding(8.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        //Slika
         Spacer(
             modifier = Modifier.height(48.dp)
         )
@@ -106,7 +105,6 @@ fun UserContent(
         Spacer(
             modifier = Modifier.height(24.dp)
         )
-        //Ime
         Text(
             text = user?.name ?: "Korisnik",
             style = MaterialTheme.typography.headlineLarge,
@@ -116,7 +114,6 @@ fun UserContent(
         Spacer(
             modifier = Modifier.height(8.dp)
         )
-        //Email i telefon
         Text(
             text = "${user?.email ?: "email"} | ${user?.phone ?: "phone"}",
             style = MaterialTheme.typography.bodyMedium,
@@ -125,7 +122,6 @@ fun UserContent(
         Spacer(
             modifier = Modifier.height(16.dp)
         )
-        //Poeni
         ProgressBar(
             user ?: User()
         )

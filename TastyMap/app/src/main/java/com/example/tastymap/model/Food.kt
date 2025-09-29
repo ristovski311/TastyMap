@@ -11,7 +11,9 @@ data class Food (
     val description : String = "",
     val latitude : Double = 0.0,
     val longitude : Double = 0.0,
-    val creatorId: String,
+    val creatorId: String = "",
+    val types: List<String> = emptyList(),
+    val creationDate: Long = System.currentTimeMillis(),
 ) {
     @Exclude
     fun getLatLng() : LatLng {
