@@ -43,13 +43,40 @@ data class MapState(
 
 class MapViewModel(
     private val locationService: LocationService,
-    private val foodRepository: FoodRepository
+    private val foodRepository: FoodRepository,
+    private val userViewModel: UserViewModel
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(MapState())
     private val _lastKnownLocation = MutableStateFlow(_state.value.lastKnownLocation)
     private val _filterRadiusKm = MutableStateFlow(_state.value.filterRadiusKm)
     private val _filterSettings = MutableStateFlow(_state.value.filterSettings)
+
+    private val _selectedFood = MutableStateFlow<Food?>(null)
+    val selectedFood: StateFlow<Food?> = _selectedFood.asStateFlow()
+
+    private val _userNames = MutableStateFlow<Map<String, String>>(emptyMap())
+    private fun loadUserNames(creatorIds: Set<String>) {
+        creatorIds.forEach { creatorId ->
+            if (!_userNames.value.containsKey(creatorId)) {
+                userViewModel.fetchUserData(creatorId) { user ->
+                    if (user != null) {
+                        _userNames.value = _userNames.value + (creatorId to user.name)
+                    }
+                }
+            }
+        }
+    }
+
+    fun loadFoodById(foodId: String) {
+        viewModelScope.launch {
+            _selectedFood.value = foodRepository.getFoodById(foodId)
+        }
+    }
+
+    fun clearSelectedFood() {
+        _selectedFood.value = null
+    }
 
     private val allFoodObjects: StateFlow<List<Food>> = foodRepository.getAllFoodObjects().stateIn(
         scope = viewModelScope,
@@ -61,19 +88,24 @@ class MapViewModel(
         _lastKnownLocation,
         _filterRadiusKm,
         _filterSettings,
-        allFoodObjects
-    ) { location, radius, settings, allFoods ->
+        allFoodObjects,
+        _userNames
+    ) { location, radius, settings, allFoods, userNames ->
 
         val allUniqueTypes = allFoods
             .flatMap { it.types }
             .distinct()
             .sorted()
 
+        val allCreatorIds = allFoods.map{it.creatorId}.toSet()
+        loadUserNames(allCreatorIds)
+
         val allUniqueCreators = allFoods
             .distinctBy { it.creatorId }
-            .map { FoodCreator(
-                id = it.creatorId,
-                name = "Korisnik_${it.creatorId.take(4)}"
+            .map { food ->
+                FoodCreator(
+                id = food.creatorId,
+                name = userNames[food.creatorId] ?: "Učitavanje..."
             ) }
             .sortedBy { it.name }
 

@@ -9,6 +9,7 @@ import com.google.firebase.firestore.ktx.toObject
 import com.google.firebase.ktx.Firebase
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.tasks.await
 
 class FoodRepository(
     private val firestore: FirebaseFirestore = FirebaseFirestore.getInstance()
@@ -52,4 +53,13 @@ class FoodRepository(
             }
     }
 
+    suspend fun getFoodById(foodId: String): Food? {
+        return try {
+            val document = foodCollection.document(foodId).get().await()
+            document.toObject<Food>()?.copy(id = document.id)
+        } catch (e: Exception) {
+            println("Error fetching food by ID: ${e.message}")
+            null
+        }
+    }
 }

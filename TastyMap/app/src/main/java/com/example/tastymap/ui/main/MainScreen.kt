@@ -17,6 +17,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.navigation.NavHost
+import androidx.navigation.NavHostController
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.example.tastymap.ui.map.MapScreen
@@ -27,6 +29,7 @@ import com.example.tastymap.ui.ranking.RankingScreen
 @Composable
 fun MainScreen(
     authViewModel: AuthViewModel,
+    mainNavController: NavHostController,
     onNavigateToUserProfile: (String) -> Unit,
     onLogout: () -> Unit
 ) {
@@ -102,7 +105,11 @@ fun MainScreen(
             startDestination = NavGraph.Map.route,
             modifier = Modifier.padding(innerPadding)
         ) {
-            composable(NavGraph.Map.route) { MapScreen() }
+            composable(NavGraph.Map.route) { MapScreen(
+                onNavigateToFoodDetails = { foodId ->
+                    mainNavController.navigate("food_details/$foodId")
+                }
+            ) }
             composable(NavGraph.Ranking.route) {
                 RankingScreen(
                     onNavigateToUserProfile = onNavigateToUserProfile

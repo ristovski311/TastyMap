@@ -44,30 +44,37 @@ import kotlinx.coroutines.launch
 import com.example.tastymap.R
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.ui.unit.sp
 import com.example.tastymap.helper.Helper
 import androidx.compose.runtime.key
+import com.example.tastymap.ui.food_details.FoodDetailsScreen
 import com.example.tastymap.viewmodel.FilterSettings
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun MapScreen() {
+fun MapScreen(
+    onNavigateToFoodDetails: (String) -> Unit
+) {
 
     val context = LocalContext.current.applicationContext as Application
     val mapViewModel: MapViewModel = viewModel(
         factory = MapViewModelFactory(context)
     )
-
     var hasLocationPermission by remember {
         mutableStateOf(checkLocationPermission(context))
     }
-
     var isMapLoaded by remember { mutableStateOf(false) }
 
+
+    // Bottom sheet prikaz bool
     var showCreationSheet by remember { mutableStateOf(false) }
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-
     var showFilterSheet by remember { mutableStateOf(false) }
+    var showFoodListSheet by remember { mutableStateOf(false) }
+    var selectedFood by remember { mutableStateOf<Food?>(null) }
+    var showFoodDetailsDialog by remember { mutableStateOf(false) }
+
 
     val locationPermissionLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestPermission()
@@ -77,7 +84,6 @@ fun MapScreen() {
             mapViewModel.startLocationUpdates()
         }
     }
-
     LaunchedEffect(Unit) {
         if (!hasLocationPermission) {
             locationPermissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
@@ -86,16 +92,13 @@ fun MapScreen() {
         }
     }
 
+
+    //Camera pomeranje prilikom load-ovanja mape
     val state by mapViewModel.state.collectAsState()
     var hasAnimatedToUserLocation by remember { mutableStateOf(false) }
     val cameraPositionState = rememberCameraPositionState {
         position = CameraPosition.fromLatLngZoom(state.lastKnownLocation, state.zoomLevel)
     }
-
-    var selectedFood by remember { mutableStateOf<Food?>(null) }
-    var showFoodDetailsDialog by remember { mutableStateOf(false) }
-
-
     LaunchedEffect(state.lastKnownLocation, isMapLoaded) {
         if (isMapLoaded
             && !hasAnimatedToUserLocation
@@ -151,6 +154,7 @@ fun MapScreen() {
         showFilterSheet = false
     }
 
+    //UI
     if (hasLocationPermission) {
         Box(modifier = Modifier.fillMaxSize()) {
             GoogleMap(
@@ -281,11 +285,28 @@ fun MapScreen() {
                     showCreationSheet = false
                 },
                 containerColor = MaterialTheme.colorScheme.tertiaryContainer,
-                modifier = Modifier.align(Alignment.TopEnd).padding(top = 16.dp, end = 16.dp)
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .padding(top = 16.dp, end = 16.dp)
             ) {
                 Icon(
                     imageVector = Icons.Filled.Build,
                     contentDescription = "Filtriraj"
+                )
+            }
+
+            FloatingActionButton(
+                onClick = {
+                    showFoodListSheet = true
+                },
+                containerColor = MaterialTheme.colorScheme.tertiaryContainer,
+                modifier = Modifier
+                    .align(Alignment.TopStart)
+                    .padding(top = 16.dp, start = 16.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.List,
+                    contentDescription = "Lista hrane"
                 )
             }
 
@@ -296,8 +317,10 @@ fun MapScreen() {
                         showFoodDetailsDialog = false
                         selectedFood = null
                     },
-                    onDetailsClick = {
+                    onDetailsClick = { food ->
                         showFoodDetailsDialog = false
+                        selectedFood = null
+                        onNavigateToFoodDetails(food.id)
                     }
                 )
             }
@@ -314,9 +337,9 @@ fun MapScreen() {
                 }
             }
 
-            if(showFilterSheet){
+            if (showFilterSheet) {
                 ModalBottomSheet(
-                    onDismissRequest = {showFilterSheet = false},
+                    onDismissRequest = { showFilterSheet = false },
                     sheetState = sheetState
                 ) {
                     FilterBottomSheet(
@@ -326,6 +349,19 @@ fun MapScreen() {
                         onApplyFilters = applyFilters,
                         onCancel = { showFilterSheet = false }
                     )
+                }
+            }
+
+            if(showFoodListSheet) {
+                ModalBottomSheet(
+                    onDismissRequest = {showFoodListSheet = false},
+                    sheetState = sheetState
+                ) {
+                    FoodListBottomSheet(state.foodObjects, onFoodClick = {
+                        foodId ->
+                        showFoodListSheet = false
+                        onNavigateToFoodDetails(foodId)
+                    })
                 }
             }
         }

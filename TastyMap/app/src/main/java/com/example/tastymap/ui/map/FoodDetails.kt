@@ -25,7 +25,7 @@ import com.example.tastymap.model.Food
 fun FoodDetailsDialog(
     foodObject: Food,
     onDismiss: () -> Unit,
-    onDetailsClick: () -> Unit
+    onDetailsClick: (Food) -> Unit
 ) {
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -49,7 +49,7 @@ fun FoodDetailsDialog(
             }
         },
         confirmButton = {
-            Button(onClick = onDetailsClick) {
+            Button(onClick = { onDetailsClick(foodObject) }) {
                 Text("Prikaži detalje")
             }
         },

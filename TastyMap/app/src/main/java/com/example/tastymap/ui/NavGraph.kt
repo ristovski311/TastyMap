@@ -15,11 +15,15 @@ sealed class NavGraph(val route: String, val title: String? = null, val icon: Im
     object Profile: NavGraph("profile", "Profil", Icons.Default.AccountCircle)
 
     object OtherUserProfile: NavGraph("userProfile/{userId}")
+    object FoodDetails: NavGraph("food_details/{foodId}")
 
     companion object {
         fun getBottomNavRoutes() = listOf(Map, Ranking, Profile)
         fun createOtherUserProfileRoute(userId: String) : String {
             return OtherUserProfile.route.replace("{userId}", userId)
+        }
+        fun createFoodDetailsRoute(foodId: String) : String {
+            return FoodDetails.route.replace("{foodId}", foodId)
         }
     }
 }
