@@ -21,6 +21,10 @@ private val DarkColorScheme = darkColorScheme(
     surfaceVariant = Color(0xFF49454F),
     onSurfaceVariant = Color(0xFFCAC4D0),
 
+    error = GoldDark,
+    outline = SilverDark,
+    scrim = BronzeDark,
+
     background = Color(0xFF121212),
     surface = Color(0xFF1E1E1E),
     onPrimary = Color.White,
@@ -38,6 +42,10 @@ private val LightColorScheme = lightColorScheme(
     onPrimaryContainer = Red,
     surfaceVariant = Color(0xFFE7E0EC),
     onSurfaceVariant = Color(0xFF49454F),
+
+    error = GoldLight,
+    outline = SilverLight,
+    scrim = BronzeLight,
 
     background = Color(0xFFFFFBFE),
     surface = Color(0xFFF4F5F7),

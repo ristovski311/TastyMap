@@ -1,8 +1,9 @@
 package com.example.tastymap.viewmodel
 
 import android.content.Context
-import android.widget.Toast
 import androidx.lifecycle.ViewModel
+import com.example.tastymap.helper.Helper
+import com.example.tastymap.helper.Helper.showToast
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.ktx.auth
 import com.google.firebase.firestore.ktx.firestore
@@ -13,26 +14,27 @@ class AuthViewModel : ViewModel() {
     var auth: FirebaseAuth = Firebase.auth
     private val db = Firebase.firestore
 
-    fun loginUser(context: Context, email: String, password: String, onLoginSuccess: () -> Unit) {
+    val currentUser = auth.currentUser
+
+    fun loginUser(email: String, password: String, onLoginSuccess: () -> Unit) {
         if(email.isBlank() || password.isBlank()) {
-            showToast(context, "Molimo unesite email i lozinku!");
+            Helper.showSnackbar("Molimo unesite email i lozinku!")
             return
         }
         auth.signInWithEmailAndPassword(email, password)
             .addOnCompleteListener { task ->
                 if (task.isSuccessful) {
-                    val user = auth.currentUser
-                    showToast(context,"Uspesan login!")
+                    Helper.showSnackbar("Uspešna prijava.")
                     onLoginSuccess()
                 } else {
-                    showToast(context, "Neuspesan login: ${task.exception?.message}")
+                    Helper.showSnackbar("Neuspesan login: ${task.exception?.message}")
                 }
             }
     }
 
-    fun registerUser(context: Context, email: String, password: String, name: String, phone: String, onRegisterSuccess: () -> Unit) {
-        if(email.isBlank() || password.isBlank()) {
-            showToast(context, "Molimo unesite email i lozinku!");
+    fun registerUser(email: String, password: String, name: String, phone: String, onRegisterSuccess: () -> Unit) {
+        if(email.isBlank() || password.isBlank() || name.isBlank() || phone.isBlank()) {
+            Helper.showSnackbar("Molimo unesite sve podatke!")
             return
         }
         auth.createUserWithEmailAndPassword(email, password)
@@ -50,20 +52,20 @@ class AuthViewModel : ViewModel() {
                         db.collection("users").document(it.uid)
                             .set(userData)
                             .addOnSuccessListener {
-                                showToast(context, "Uspesna registracija!")
+                                Helper.showSnackbar("Uspešna registracija!")
                                 onRegisterSuccess()
                             }
                             .addOnFailureListener { e ->
-                                showToast(context, "Neuspesna registracija: ${e.message}")
+                                Helper.showSnackbar("Neuspešna registracija: ${e.message}")
                             }
                     }
                 } else {
-                    showToast(context, "Neuspesna registracija: ${task.exception?.message}")
+                    Helper.showSnackbar("Neuspešna registracija: ${task.exception?.message}")
                 }
             }
     }
 
-    fun saveUserData(context: Context, name: String, phone: String, onDataSaved: () -> Unit) {
+    fun updateUserData(name: String, phone: String, onResult: (Boolean) -> Unit) {
         val user = auth.currentUser
         if(user!=null){
             val userMap = hashMapOf<String, Any>(
@@ -74,36 +76,16 @@ class AuthViewModel : ViewModel() {
             db.collection("users").document(user.uid)
                 .update(userMap)
                 .addOnSuccessListener {
-                    showToast(context, "Podaci su sacuvani!")
-                    onDataSaved()
-                }
-                .addOnFailureListener { e ->
-                    showToast(context, "Greska pri cuvanju podataka: ${e.message}")
-                }
-        }
-    }
-
-    fun updateUserData(context: Context, name: String, phone: String, onResult: (Boolean) -> Unit) {
-        val user = auth.currentUser
-        if(user!=null){
-            val userMap = hashMapOf<String, Any>(
-                "name" to name,
-                "phone" to phone
-            )
-
-            db.collection("users").document(user.uid)
-                .update(userMap)
-                .addOnSuccessListener {
-                    showToast(context, "Podaci su ažurirani!")
+                    Helper.showSnackbar("Podaci su ažurirani!")
                     onResult(true)
                 }
                 .addOnFailureListener { e ->
-                    showToast(context, "Greška pri ažuriranju podataka: ${e.message}")
+                    Helper.showSnackbar("Greška pri ažuriranju podataka: ${e.message}")
                     onResult(false)
                 }
         }
         else{
-            showToast(context, "Korisnik nije prijavljen!")
+            Helper.showSnackbar("Korisnik nije prijavljen!")
             onResult(false)
         }
     }
@@ -129,9 +111,5 @@ class AuthViewModel : ViewModel() {
     fun logout()
     {
         auth.signOut()
-    }
-
-    fun showToast(context: Context, msg: String) {
-        Toast.makeText(context, msg, Toast.LENGTH_LONG).show()
     }
 }

@@ -8,17 +8,27 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Snackbar
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.compositionLocalOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
@@ -36,12 +46,24 @@ import com.example.tastymap.ui.main.MainScreen
 import com.example.tastymap.ui.register.RegisterScreen
 import com.example.tastymap.ui.NavGraph
 import androidx.navigation.NavType
+import com.example.tastymap.helper.Helper
+import com.example.tastymap.model.Food
 import com.example.tastymap.ui.food_details.FoodDetailsScreen
 import com.example.tastymap.ui.profile.OtherUserProfileScreen
+import com.example.tastymap.viewmodel.FoodViewModel
+import com.example.tastymap.viewmodel.FoodViewModelFactory
 import com.example.tastymap.viewmodel.MapViewModel
 import com.example.tastymap.viewmodel.MapViewModelFactory
 import com.example.tastymap.viewmodel.UserViewModel
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
 
+val LocalSnackbarHostState = compositionLocalOf<SnackbarHostState> {
+    error("Nema snackBarHost-a")
+}
+val LocalSnackbarScope = compositionLocalOf<CoroutineScope> {
+    error("Nema coroutine scope-a")
+}
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -49,115 +71,152 @@ class MainActivity : ComponentActivity() {
         val auth = Firebase.auth
 
         setContent {
-            TastyMapTheme {
-                Scaffold { paddingValues ->
-                    val navController = rememberNavController()
-                    val authViewModel: AuthViewModel = viewModel()
-                    val context = LocalContext.current
-                    val startDestination =
-                        if (auth.currentUser != null) "main_screen" else "login_screen"
+            val snackbarHostState = remember { SnackbarHostState() }
+            val scope = rememberCoroutineScope()
 
-                    NavHost(
-                        navController = navController,
-                        startDestination = startDestination,
-                        modifier = Modifier.padding(paddingValues)
-                    ) {
-                        composable("login_screen") {
-                            LoginScreen(
-                                onLoginClick = { email, pass ->
-                                    authViewModel.loginUser(context, email, pass) {
-                                        navController.navigate("main_screen") {
+            Helper.showGlobalSnackbar = { message ->
+                scope.launch {
+                    snackbarHostState.showSnackbar(message)
+                }
+            }
+
+            TastyMapTheme {
+
+                CompositionLocalProvider(
+                    LocalSnackbarHostState provides snackbarHostState,
+                    LocalSnackbarScope provides scope
+                ) {
+                    Scaffold(
+                        snackbarHost = {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .padding(top = 56.dp, start = 16.dp, end = 16.dp),
+                                contentAlignment = Alignment.TopCenter
+                            ) {
+                                SnackbarHost(hostState = snackbarHostState) { data ->
+                                    Snackbar(
+                                        snackbarData = data,
+                                        containerColor = MaterialTheme.colorScheme.primary,
+                                        contentColor = MaterialTheme.colorScheme.onSurface,
+                                        shape = MaterialTheme.shapes.medium,
+                                    )
+                                }
+                            }
+                        }
+                    ) { paddingValues ->
+                        val navController = rememberNavController()
+                        val authViewModel: AuthViewModel = viewModel()
+                        val userViewModel: UserViewModel = viewModel()
+                        val startDestination =
+                            if (auth.currentUser != null) "main_screen" else "login_screen"
+
+                        NavHost(
+                            navController = navController,
+                            startDestination = startDestination,
+                            modifier = Modifier.padding(paddingValues)
+                        ) {
+                            composable("login_screen") {
+                                LoginScreen(
+                                    onLoginClick = { email, pass ->
+                                        authViewModel.loginUser(email, pass) {
+                                            navController.navigate("main_screen") {
+                                                popUpTo("login_screen") { inclusive = true }
+                                            }
+                                        }
+                                    },
+                                    onRegisterClick = {
+                                        navController.navigate("register_screen") {
                                             popUpTo("login_screen") { inclusive = true }
                                         }
-                                    }
-                                },
-                                onRegisterClick = {
-                                    navController.navigate("register_screen") {
-                                        popUpTo("login_screen") { inclusive = true }
-                                    }
-                                },
-                            )
-                        }
-                        composable(route = "register_screen") {
-                            RegisterScreen(
-                                authViewModel,
-                                onRegistrationSuccess = {
-                                    navController.navigate("main_screen") {
-                                        popUpTo("register_screen") { inclusive = true }
-                                    }
-                                },
-                                onNavigateToLogin = {
-                                    navController.navigate("login_screen") {
-                                        popUpTo("register_screen") { inclusive = true }
-                                    }
-                                }
-                            )
-                        }
-                        composable("main_screen") {
-                            MainScreen(
-                                authViewModel = authViewModel,
-                                mainNavController = navController,
-                                onNavigateToUserProfile = {
-                                    userId ->
-                                    navController.navigate(NavGraph.createOtherUserProfileRoute(userId))
-                                },
-                                onLogout = {
-                                    navController.navigate("login_screen") {
-                                        popUpTo("main_screen") { inclusive = true }
-                                    }
-                                }
-                            )
-                        }
-                        composable(
-                            route = NavGraph.OtherUserProfile.route,
-                            arguments = listOf(
-                                navArgument("userId") { type = NavType.StringType }
-                            ),
-                        ) {
-                            backStackEntry ->
-                            val userId = backStackEntry.arguments?.getString("userId") ?: return@composable
-                            var userViewModel : UserViewModel = viewModel()
-
-                            OtherUserProfileScreen(
-                                userId = userId,
-                                userViewModel = userViewModel,
-                                onBackClick = {
-                                    navController.popBackStack()
-                                }
-                            )
-                        }
-                        composable(
-                            route = "food_details/{foodId}",
-                            arguments = listOf(
-                                navArgument("foodId") {type = NavType.StringType}
-                            )
-                        ) {
-                            backStackEntry ->
-                            val foodId = backStackEntry.arguments?.getString("foodId") ?: return@composable
-                            val mapViewModel : MapViewModel = viewModel(
-                                factory = MapViewModelFactory(context.applicationContext as Application)
-                            )
-
-                            val food = mapViewModel.selectedFood.collectAsState().value
-
-                            LaunchedEffect(foodId) {
-                                mapViewModel.loadFoodById(foodId)
+                                    },
+                                )
                             }
+                            composable(route = "register_screen") {
+                                RegisterScreen(
+                                    authViewModel,
+                                    onRegistrationSuccess = {
+                                        navController.navigate("main_screen") {
+                                            popUpTo("register_screen") { inclusive = true }
+                                        }
+                                    },
+                                    onNavigateToLogin = {
+                                        navController.navigate("login_screen") {
+                                            popUpTo("register_screen") { inclusive = true }
+                                        }
+                                    }
+                                )
+                            }
+                            composable("main_screen") {
+                                MainScreen(
+                                    authViewModel = authViewModel,
+                                    mainNavController = navController,
+                                    onNavigateToUserProfile = { userId ->
+                                        navController.navigate(
+                                            NavGraph.createOtherUserProfileRoute(
+                                                userId
+                                            )
+                                        )
+                                    },
+                                    userViewModel = userViewModel,
+                                    onLogout = {
+                                        navController.navigate("login_screen") {
+                                            popUpTo("main_screen") { inclusive = true }
+                                        }
+                                    }
+                                )
+                            }
+                            composable(
+                                route = NavGraph.OtherUserProfile.route,
+                                arguments = listOf(
+                                    navArgument("userId") { type = NavType.StringType }
+                                ),
+                            ) { backStackEntry ->
+                                val userId = backStackEntry.arguments?.getString("userId")
+                                    ?: return@composable
+                                var userViewModel: UserViewModel = viewModel()
 
-                            if (food != null) {
-                                FoodDetailsScreen(
-                                    food = food,
+                                OtherUserProfileScreen(
+                                    userId = userId,
+                                    userViewModel = userViewModel,
                                     onBackClick = {
-                                        mapViewModel.clearSelectedFood()
                                         navController.popBackStack()
                                     }
                                 )
-                            } else {
-                                Box(
-                                    modifier = Modifier.fillMaxSize(),
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    CircularProgressIndicator()
+                            }
+                            composable(
+                                route = "food_details/{foodId}",
+                                arguments = listOf(
+                                    navArgument("foodId") { type = NavType.StringType }
+                                )
+                            ) { backStackEntry ->
+                                val foodId = backStackEntry.arguments?.getString("foodId")
+                                    ?: return@composable
+                                val foodViewModel: FoodViewModel = viewModel(
+                                    factory = FoodViewModelFactory(
+                                        userViewModel = userViewModel
+                                    )
+                                )
+
+                                val state = foodViewModel.state.collectAsState().value
+
+                                LaunchedEffect(foodId) {
+                                    foodViewModel.loadFoodDetails(foodId)
+                                }
+
+                                if (state.food != null) {
+                                    FoodDetailsScreen(
+                                        food = state.food,
+                                        foodViewModel = foodViewModel,
+                                        onBackClick = { navController.popBackStack() }
+                                    )
+                                } else {
+                                    Box(
+                                        modifier = Modifier.fillMaxSize(),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        CircularProgressIndicator()
+                                    }
                                 }
                             }
                         }

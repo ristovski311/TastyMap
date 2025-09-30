@@ -3,6 +3,7 @@ package com.example.tastymap.ui.login
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
@@ -29,17 +30,17 @@ fun LoginScreen(
             .fillMaxSize()
             .verticalScroll(scrollState)
             .padding(16.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
     ) {
-
         Image(
             painter = painterResource(
                 id = if (isSystemInDarkTheme()) R.drawable.illustration_login else R.drawable.illustration_login_light
             ),
             contentDescription = "Logo aplikacije",
             modifier = Modifier
-                .size(400.dp)
-                .padding(top = 16.dp, bottom = 16.dp)
+                .fillMaxWidth()
+                .padding(top = 16.dp)
         )
         OutlinedTextField(
             value = email,

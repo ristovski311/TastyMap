@@ -12,7 +12,15 @@ val Red = Color(0xFFF50F00)
 val Orange = Color(0xFFF06400)
 val Peach = Color(0xFFF58536)
 
+val GoldLight = Color(0xFFFFD700)
+val SilverLight = Color(0xFFC0C0C0)
+val BronzeLight = Color(0xFFCD7F32)
+
 //Dark theme
+
+val BronzeDark = Color(0xFFD4956D)
+val GoldDark = Color(0xFFFFC107)
+val SilverDark = Color(0xFFE0E0E0)
 
 val LightRed = Color(0xFFF05726)
 val LightOrange = Color(0xFFF5A22C)

@@ -7,6 +7,8 @@ import android.graphics.Paint
 import android.graphics.PorterDuff
 import android.graphics.PorterDuffXfermode
 import android.graphics.Rect
+import android.view.Gravity
+import android.widget.Toast
 import androidx.annotation.DrawableRes
 import androidx.core.content.ContextCompat
 import com.google.android.gms.maps.model.BitmapDescriptor
@@ -57,5 +59,30 @@ object Helper {
         return BitmapDescriptorFactory.fromBitmap(circularBm)
     }
 
+    fun formatTimestamp(timestamp: Long): String {
+        val diff = System.currentTimeMillis() - timestamp
+        val seconds = diff / 1000
+        val minutes = seconds / 60
+        val hours = minutes / 60
+        val days = hours / 24
 
+        return when {
+            days > 0 -> "Pre $days dana"
+            hours > 0 -> "Pre $hours sati"
+            minutes > 0 -> "Pre $minutes minuta"
+            else -> "Upravo sad"
+        }
+    }
+
+    fun showToast(context: Context, msg: String) {
+        val toast = Toast.makeText(context, msg, Toast.LENGTH_LONG)
+        toast.setGravity(Gravity.TOP or Gravity.CENTER_HORIZONTAL, 0, 200)
+        toast.show()
+    }
+
+    var showGlobalSnackbar: ((String) -> Unit)? = null
+
+    fun showSnackbar(message: String) {
+        showGlobalSnackbar?.invoke(message)
+    }
 }

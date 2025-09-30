@@ -12,6 +12,7 @@ import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.NavHost
 import com.example.tastymap.ui.NavGraph
 import androidx.compose.material3.*
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -24,11 +25,13 @@ import androidx.navigation.compose.rememberNavController
 import com.example.tastymap.ui.map.MapScreen
 import com.example.tastymap.ui.profile.ProfileScreen
 import com.example.tastymap.ui.ranking.RankingScreen
+import com.example.tastymap.viewmodel.UserViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MainScreen(
     authViewModel: AuthViewModel,
+    userViewModel: UserViewModel,
     mainNavController: NavHostController,
     onNavigateToUserProfile: (String) -> Unit,
     onLogout: () -> Unit
@@ -43,6 +46,8 @@ fun MainScreen(
     val currentRoute = navBackStackEntry?.destination?.route
 
     var showLogoutDialog by remember { mutableStateOf(false) }
+
+    val currentUser = authViewModel.currentUser
 
     fun getCurrentTitle() : String {
         return when(currentRoute){
@@ -102,22 +107,23 @@ fun MainScreen(
     ) { innerPadding ->
         NavHost(
             navController = bottomNavController,
-            startDestination = NavGraph.Map.route,
+            startDestination = NavGraph.Profile.route,
             modifier = Modifier.padding(innerPadding)
         ) {
-            composable(NavGraph.Map.route) { MapScreen(
+            composable(NavGraph.Profile.route) {
+                ProfileScreen(
+                    authViewModel = authViewModel,
+                )
+            }
+            composable(NavGraph.Map.route) { MapScreen(userViewModel = userViewModel,
                 onNavigateToFoodDetails = { foodId ->
                     mainNavController.navigate("food_details/$foodId")
                 }
             ) }
             composable(NavGraph.Ranking.route) {
                 RankingScreen(
-                    onNavigateToUserProfile = onNavigateToUserProfile
-                )
-            }
-            composable(NavGraph.Profile.route) {
-                ProfileScreen(
-                    authViewModel = authViewModel,
+                    onNavigateToUserProfile = onNavigateToUserProfile,
+                    currentUserId = currentUser?.uid ?: ""
                 )
             }
         }

@@ -3,6 +3,7 @@ package com.example.tastymap.ui.register
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
@@ -35,16 +36,18 @@ fun RegisterScreen(
             .verticalScroll(scrollState)
             .imePadding()
             .padding(16.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
     ) {
+        Spacer(modifier = Modifier.height(48.dp))
         Image(
             painter = painterResource(
                 id = if (isSystemInDarkTheme()) R.drawable.illustration_login else R.drawable.illustration_login_light
             ),
             contentDescription = "Logo aplikacije",
             modifier = Modifier
-                .size(400.dp)
-                .padding(top = 16.dp, bottom = 16.dp)
+                .fillMaxWidth()
+                .padding(top = 16.dp)
         )
         OutlinedTextField(
             value = name,
@@ -84,10 +87,8 @@ fun RegisterScreen(
         )
         Button(
             onClick = {
-                if(email.isNotBlank() && password.isNotBlank() && name.isNotBlank() && phone.isNotBlank()){
-                    authViewModel.registerUser(context, email, password, name, phone) {
-                        onRegistrationSuccess()
-                    }
+                authViewModel.registerUser(email, password, name, phone) {
+                    onRegistrationSuccess()
                 }
             },
             modifier = Modifier.fillMaxWidth()

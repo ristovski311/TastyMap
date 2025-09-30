@@ -68,16 +68,6 @@ class MapViewModel(
         }
     }
 
-    fun loadFoodById(foodId: String) {
-        viewModelScope.launch {
-            _selectedFood.value = foodRepository.getFoodById(foodId)
-        }
-    }
-
-    fun clearSelectedFood() {
-        _selectedFood.value = null
-    }
-
     private val allFoodObjects: StateFlow<List<Food>> = foodRepository.getAllFoodObjects().stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5000),
@@ -168,6 +158,12 @@ class MapViewModel(
     fun saveFood(food: Food) {
         viewModelScope.launch {
             foodRepository.addFoodObject(food)
+            userViewModel.givePointsForCreatingFood(
+                userId = currentUserId,
+                onSuccess = {
+                    println("Dodati poeni korisniku za kreiranje hrane!")
+                }
+            )
         }
     }
 

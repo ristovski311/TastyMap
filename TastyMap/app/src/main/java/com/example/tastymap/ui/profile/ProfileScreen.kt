@@ -22,6 +22,7 @@ import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.sp
+import com.example.tastymap.helper.Helper.showToast
 import com.example.tastymap.viewmodel.UserViewModel
 
 
@@ -260,15 +261,15 @@ fun EditProfileDialog(
             Button(
                 onClick = {
                     if (name.isNotBlank() && phone.isNotBlank()) {
-                        authViewModel.updateUserData(context, name, phone) { success ->
+                        authViewModel.updateUserData(name, phone) { success ->
                             if (success) {
                                 onSuccess()
                             } else {
-                                authViewModel.showToast(context, "Greška pri ažuriranju podataka!")
+                                showToast(context, "Greška pri ažuriranju podataka!")
                             }
                         }
                     } else {
-                        authViewModel.showToast(context, "Polja ne smeju biti prazna!")
+                        showToast(context, "Polja ne smeju biti prazna!")
                     }
                 }
             ) {

@@ -40,7 +40,8 @@ import com.example.tastymap.R
 
 @Composable
 fun RankingScreen(
-    onNavigateToUserProfile: (String) -> Unit
+    onNavigateToUserProfile: (String) -> Unit,
+    currentUserId: String
 ) {
 
     val rankingViewModel: RankingViewModel = viewModel()
@@ -78,6 +79,7 @@ fun RankingScreen(
                 }
             }
         } else {
+            println("🔍 RankingScreen currentUserId = '$currentUserId'")
             LazyColumn(
                 modifier = Modifier
                     .fillMaxSize()
@@ -100,101 +102,12 @@ fun RankingScreen(
                     )
                 }
                 itemsIndexed(users) { index, user ->
-                    RankingItem(index, user) { userId ->
+                    RankingItem(index, user, currentUserId) { userId ->
                         onNavigateToUserProfile(userId)
                     }
                 }
             }
 
-        }
-    }
-
-
-}
-
-@Composable
-fun RankingItem(
-    index: Int,
-    user: User,
-    onUserClick: (String) -> Unit
-) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-            containerColor = when (index) {
-                0 -> MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)
-                1 -> MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.5f)
-                2 -> MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.5f)
-                else -> MaterialTheme.colorScheme.surfaceVariant
-            }
-        ),
-        onClick = {
-            onUserClick(user.uid)
-        }
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text(
-                text = "${index + 1}",
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.Black,
-                modifier = Modifier.width(36.dp)
-            )
-
-            Card(
-                shape = CircleShape,
-                modifier = Modifier.size(50.dp)
-            ) {
-                Image(
-                    painter = rememberVectorPainter(Icons.Default.Person),
-                    contentDescription = null,
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(8.dp),
-                    colorFilter = androidx.compose.ui.graphics.ColorFilter.tint(MaterialTheme.colorScheme.onSurfaceVariant)
-                )
-            }
-
-            Column(
-                modifier = Modifier
-                    .weight(1f)
-                    .padding(8.dp)
-            ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-
-                    Text(
-                        text = user.name ?: "",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.SemiBold,
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
-
-                    Text(
-                        text = "Nivo ${user.currentLevel()}",
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Bold,
-                        color = when (index) {
-                            0 -> MaterialTheme.colorScheme.primary
-                            1 -> MaterialTheme.colorScheme.primary
-                            2 -> MaterialTheme.colorScheme.primary
-                            else -> MaterialTheme.colorScheme.onSecondary
-                        }
-                    )
-                }
-
-                Text(
-                    text = "${user.points} poena",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
         }
     }
 }

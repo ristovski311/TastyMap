@@ -50,11 +50,13 @@ import com.example.tastymap.helper.Helper
 import androidx.compose.runtime.key
 import com.example.tastymap.ui.food_details.FoodDetailsScreen
 import com.example.tastymap.viewmodel.FilterSettings
+import com.example.tastymap.viewmodel.UserViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MapScreen(
-    onNavigateToFoodDetails: (String) -> Unit
+    onNavigateToFoodDetails: (String) -> Unit,
+    userViewModel : UserViewModel
 ) {
 
     val context = LocalContext.current.applicationContext as Application
@@ -145,6 +147,7 @@ fun MapScreen(
                 types = types
             )
             mapViewModel.saveFood(newFood)
+
             showCreationSheet = false
         }
     }
