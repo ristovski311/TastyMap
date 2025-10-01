@@ -17,6 +17,10 @@ class FoodRepository(
     private val auth: FirebaseAuth = Firebase.auth
     private val foodCollection = firestore.collection("food")
 
+    fun getCurrentUserId(): String {
+        return auth.currentUser?.uid ?: ""
+    }
+
     fun getAllFoodObjects() : Flow<List<Food>> = callbackFlow {
 
         val collectionRef = firestore.collection("food")
@@ -37,10 +41,6 @@ class FoodRepository(
         awaitClose {
             subscription.remove()
         }
-    }
-
-    fun getCurrentUserId(): String {
-        return auth.currentUser?.uid ?: ""
     }
 
     fun addFoodObject(food: Food) {

@@ -13,8 +13,14 @@ import androidx.annotation.DrawableRes
 import androidx.core.content.ContextCompat
 import com.google.android.gms.maps.model.BitmapDescriptor
 import com.google.android.gms.maps.model.BitmapDescriptorFactory
+import kotlin.math.atan2
+import kotlin.math.cos
+import kotlin.math.sin
+import kotlin.math.sqrt
 
 object Helper {
+
+    const val POINTS_FOR_NEW_LEVEL = 100;
 
     fun getCircularBitmap(bitmap: Bitmap): Bitmap {
         val output = Bitmap.createBitmap(bitmap.width, bitmap.height, Bitmap.Config.ARGB_8888)
@@ -78,6 +84,21 @@ object Helper {
         val toast = Toast.makeText(context, msg, Toast.LENGTH_LONG)
         toast.setGravity(Gravity.TOP or Gravity.CENTER_HORIZONTAL, 0, 200)
         toast.show()
+    }
+
+    fun calculateDistanceInKm(lat1: Double, lon1: Double, lat2: Double, lon2: Double): Double {
+        val r = 6371 // Radius Zemlje u km
+
+        val latDistance = Math.toRadians(lat2 - lat1)
+        val lonDistance = Math.toRadians(lon2 - lon1)
+
+        val a = sin(latDistance / 2) * sin(latDistance / 2) +
+                cos(Math.toRadians(lat1)) * cos(Math.toRadians(lat2)) *
+                sin(lonDistance / 2) * sin(lonDistance / 2)
+
+        val c = 2 * atan2(sqrt(a), sqrt(1 - a))
+
+        return r * c
     }
 
     var showGlobalSnackbar: ((String) -> Unit)? = null

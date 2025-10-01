@@ -15,7 +15,7 @@ class MapViewModelFactory(private val application: Application) : ViewModelProvi
             val locationService = LocationServiceImpl(application.applicationContext)
             val foodRepository = FoodRepository()
             val userViewModel = UserViewModel()
-            return MapViewModel(locationService, foodRepository, userViewModel) as T
+            return MapViewModel(context = application.applicationContext, locationService, foodRepository, userViewModel) as T
         }
         throw IllegalArgumentException("Nepoznata viewModel klasa!")
     }

@@ -48,8 +48,10 @@ import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.ui.unit.sp
 import com.example.tastymap.helper.Helper
 import androidx.compose.runtime.key
+import com.example.tastymap.model.User
 import com.example.tastymap.ui.food_details.FoodDetailsScreen
 import com.example.tastymap.viewmodel.FilterSettings
+import com.example.tastymap.viewmodel.NearbyUser
 import com.example.tastymap.viewmodel.UserViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -76,6 +78,8 @@ fun MapScreen(
     var showFoodListSheet by remember { mutableStateOf(false) }
     var selectedFood by remember { mutableStateOf<Food?>(null) }
     var showFoodDetailsDialog by remember { mutableStateOf(false) }
+    var showUserDetailsDialog by remember { mutableStateOf(false) }
+    var selectedUser by remember { mutableStateOf<NearbyUser?>(null) }
 
 
     val locationPermissionLauncher = rememberLauncherForActivityResult(
@@ -192,6 +196,28 @@ fun MapScreen(
                             icon = Helper.bitmapDescriptorFromVector(
                                 context,
                                 R.drawable.food_placeholder,
+                                50
+                            )
+                        )
+                    }
+                }
+
+                state.nearbyUsers.forEach { user ->
+                    key("user_${user.id}_${user.location.latitude}_${user.location.longitude}"){
+                        val userMarkerState = rememberMarkerState(position = user.location)
+                        Marker(
+                            state = userMarkerState,
+                            title = user.name,
+                            snippet = "Korisnik u blizini",
+                            onClick = {
+                                marker ->
+                                selectedUser = user
+                                showUserDetailsDialog = true
+                                true
+                            },
+                            icon = Helper.bitmapDescriptorFromVector(
+                                context,
+                                R.drawable.illustration_login_light,
                                 50
                             )
                         )
@@ -324,6 +350,17 @@ fun MapScreen(
                         showFoodDetailsDialog = false
                         selectedFood = null
                         onNavigateToFoodDetails(food.id)
+                    }
+                )
+            }
+
+            if (showUserDetailsDialog && selectedUser != null) {
+                UserDetailsDialog(
+                    userName = selectedUser?.name ?: "",
+                    userPoints = 0,
+                    onDismiss = {
+                        showUserDetailsDialog = false
+                        selectedUser = null
                     }
                 )
             }

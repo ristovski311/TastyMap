@@ -1,20 +1,31 @@
 package com.example.tastymap.viewmodel
 
+import android.app.NotificationManager
+import android.content.Context
+import androidx.core.app.NotificationCompat
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.example.tastymap.R
+import com.example.tastymap.data.FoodRepository
+import com.example.tastymap.helper.Helper
 import com.example.tastymap.model.Food
 import com.example.tastymap.services.LocationService
 import com.google.android.gms.maps.model.LatLng
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import androidx.lifecycle.viewModelScope
-import com.example.tastymap.data.FoodRepository
+import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.tasks.await
 import kotlin.math.*
 
 data class FoodCreator(
     val id: String,
     val name: String
+)
+
+data class NearbyUser(
+    val id: String,
+    val name: String,
+    val location: LatLng
 )
 
 data class FilterSettings(
@@ -33,6 +44,7 @@ enum class DateFilterOption(val label: String, val days: Int?) {
 data class MapState(
     val lastKnownLocation: LatLng = LatLng(43.3209, 21.8958),
     val foodObjects: List<Food> = emptyList(),
+    val nearbyUsers: List<NearbyUser> = emptyList(),
     val isTracking: Boolean = false,
     val zoomLevel: Float = 15f,
     val filterRadiusKm: Float = 5.0f,
@@ -41,21 +53,44 @@ data class MapState(
     val uniqueCreators: List<FoodCreator> = emptyList()
 )
 
+data class LocationData(
+    val location: LatLng,
+    val radiusKm: Float
+)
+
+data class FilterData(
+    val settings: FilterSettings,
+    val allFoods: List<Food>
+)
+
+data class UserData(
+    val userNames: Map<String, String>,
+    val nearbyUsers: List<NearbyUser>
+)
+
 class MapViewModel(
+    private val context: Context,
     private val locationService: LocationService,
     private val foodRepository: FoodRepository,
     private val userViewModel: UserViewModel
 ) : ViewModel() {
-
     private val _state = MutableStateFlow(MapState())
     private val _lastKnownLocation = MutableStateFlow(_state.value.lastKnownLocation)
     private val _filterRadiusKm = MutableStateFlow(_state.value.filterRadiusKm)
     private val _filterSettings = MutableStateFlow(_state.value.filterSettings)
 
-    private val _selectedFood = MutableStateFlow<Food?>(null)
-    val selectedFood: StateFlow<Food?> = _selectedFood.asStateFlow()
+    private val notifiedFoodIds = mutableSetOf<String>()
+    private val notifiedUserIds = mutableSetOf<String>()
+    private var previousLocation: LatLng? = null
 
+    private val _nearbyUsers = MutableStateFlow<List<NearbyUser>>(emptyList())
     private val _userNames = MutableStateFlow<Map<String, String>>(emptyMap())
+
+    private var usersLocationListener: com.google.firebase.firestore.ListenerRegistration? = null
+
+    val currentUserId: String
+        get() = foodRepository.getCurrentUserId()
+
     private fun loadUserNames(creatorIds: Set<String>) {
         creatorIds.forEach { creatorId ->
             if (!_userNames.value.containsKey(creatorId)) {
@@ -75,75 +110,89 @@ class MapViewModel(
     )
 
     val state: StateFlow<MapState> = combine(
-        _lastKnownLocation,
-        _filterRadiusKm,
-        _filterSettings,
-        allFoodObjects,
-        _userNames
-    ) { location, radius, settings, allFoods, userNames ->
+        combine(_lastKnownLocation, _filterRadiusKm) { loc, radius ->
+            LocationData(loc, radius)
+        },
+        combine(_filterSettings, allFoodObjects) { settings, foods ->
+            FilterData(settings, foods)
+        },
+        combine(_userNames, _nearbyUsers) { names, users ->
+            UserData(names, users)
+        }
+    ) { locationData, filterData, userData ->
 
-        val allUniqueTypes = allFoods
+        val allUniqueTypes = filterData.allFoods
             .flatMap { it.types }
             .distinct()
             .sorted()
 
-        val allCreatorIds = allFoods.map{it.creatorId}.toSet()
+        val allCreatorIds = filterData.allFoods.map { it.creatorId }.toSet()
         loadUserNames(allCreatorIds)
 
-        val allUniqueCreators = allFoods
+        val allUniqueCreators = filterData.allFoods
             .distinctBy { it.creatorId }
             .map { food ->
                 FoodCreator(
-                id = food.creatorId,
-                name = userNames[food.creatorId] ?: "Učitavanje..."
-            ) }
+                    id = food.creatorId,
+                    name = userData.userNames[food.creatorId] ?: "Učitavanje..."
+                )
+            }
             .sortedBy { it.name }
 
-        val filteredFoods = allFoods.filter { food ->
-            val distance = calculateDistanceInKm(
-                lat1 = location.latitude,
-                lon1 = location.longitude,
+        val filteredFoods = filterData.allFoods.filter { food ->
+            val distance = Helper.calculateDistanceInKm(
+                lat1 = locationData.location.latitude,
+                lon1 = locationData.location.longitude,
                 lat2 = food.latitude,
                 lon2 = food.longitude
             )
-            val isWithinRadius = distance <= radius
+            val isWithinRadius = distance <= locationData.radiusKm
 
             if (!isWithinRadius) return@filter false
 
-            val isTypeMatch = if (settings.selectedTypes.isEmpty()) {
+            val isTypeMatch = if (filterData.settings.selectedTypes.isEmpty()) {
                 true
             } else {
-                food.types.any { it in settings.selectedTypes }
+                food.types.any { it in filterData.settings.selectedTypes }
             }
 
             if (!isTypeMatch) return@filter false
 
-            val isCreatorMatch = if (settings.selectedCreatorIds.isEmpty()) {
+            val isCreatorMatch = if (filterData.settings.selectedCreatorIds.isEmpty()) {
                 true
             } else {
-                food.creatorId in settings.selectedCreatorIds
+                food.creatorId in filterData.settings.selectedCreatorIds
             }
 
             if (!isCreatorMatch) return@filter false
 
-            val isDateMatch = when (settings.filterByDateOption) {
+            val isDateMatch = when (filterData.settings.filterByDateOption) {
                 DateFilterOption.ALL_TIME -> true
                 else -> {
-                    settings.filterByDateOption.days?.let { days ->
+                    filterData.settings.filterByDateOption.days?.let { days ->
                         val timeLimit = System.currentTimeMillis() - days * 24 * 60 * 60 * 1000L
                         food.creationDate >= timeLimit
-                    } ?: true
+                    } != false
                 }
             }
 
             isDateMatch
         }
 
+        if (previousLocation != locationData.location &&
+            locationData.location.latitude != 0.0 &&
+            locationData.location.longitude != 0.0
+        ) {
+            checkProximity(locationData.location, locationData.radiusKm, filteredFoods)
+            previousLocation = locationData.location
+        }
+
         MapState(
-            lastKnownLocation = location,
+            lastKnownLocation = locationData.location,
             foodObjects = filteredFoods,
-            filterRadiusKm = radius,
-            filterSettings = settings,
+            nearbyUsers = userData.nearbyUsers,
+            filterRadiusKm = locationData.radiusKm,
+            filterSettings = filterData.settings,
             uniqueFoodTypes = allUniqueTypes,
             uniqueCreators = allUniqueCreators
         )
@@ -152,8 +201,6 @@ class MapViewModel(
         started = SharingStarted.WhileSubscribed(5000),
         initialValue = _state.value
     )
-    val currentUserId: String
-        get() = foodRepository.getCurrentUserId()
 
     fun saveFood(food: Food) {
         viewModelScope.launch {
@@ -167,12 +214,155 @@ class MapViewModel(
         }
     }
 
+    private fun startListeningToUserLocations() {
+        val currentUserId = foodRepository.getCurrentUserId()
+        if (currentUserId.isBlank()) return
+
+        usersLocationListener?.remove()
+
+        usersLocationListener = FirebaseFirestore.getInstance()
+            .collection("users")
+            .addSnapshotListener { snapshot, error ->
+                if (error != null) {
+                    println("Greška pri praćenju korisnika: ${error.message}")
+                    return@addSnapshotListener
+                }
+
+                if (snapshot != null) {
+                    viewModelScope.launch {
+                        updateNearbyUsersFromSnapshot(snapshot.documents, currentUserId)
+                    }
+                }
+            }
+    }
+
+    private fun updateNearbyUsersFromSnapshot(
+        documents: List<com.google.firebase.firestore.DocumentSnapshot>,
+        currentUserId: String
+    ) {
+        val currentLocation = _lastKnownLocation.value
+        val radiusKm = _filterRadiusKm.value
+
+        val currentlyInRangeIds = mutableSetOf<String>()
+        val nearbyUsersList = mutableListOf<NearbyUser>()
+        val newUserNames = mutableListOf<String>()
+
+        documents.forEach { doc ->
+            val userId = doc.id
+            if (userId == currentUserId) return@forEach
+
+            val geoPoint = doc.getGeoPoint("lastKnownLocation") ?: return@forEach
+            val userName = doc.getString("name") ?: "Korisnik"
+
+            val userLocation = LatLng(geoPoint.latitude, geoPoint.longitude)
+
+            val distance = Helper.calculateDistanceInKm(
+                currentLocation.latitude,
+                currentLocation.longitude,
+                geoPoint.latitude,
+                geoPoint.longitude
+            )
+
+            if (distance <= radiusKm) {
+                currentlyInRangeIds.add(userId)
+
+                nearbyUsersList.add(
+                    NearbyUser(
+                        id = userId,
+                        name = userName,
+                        location = userLocation
+                    )
+                )
+
+                if (userId !in notifiedUserIds) {
+                    newUserNames.add(userName)
+                }
+            }
+        }
+
+        if (newUserNames.isNotEmpty()) {
+            val title = "Novi Korisnici u blizini!"
+            val message = if (newUserNames.size == 1) {
+                "${newUserNames.first()} je novootkriven u Vašem radijusu."
+            } else {
+                "Pronašli smo ${newUserNames.size} NOVIH korisnika: ${newUserNames.joinToString(", ")}."
+            }
+            sendNotification(title, message)
+        }
+
+        _nearbyUsers.value = nearbyUsersList
+
+        notifiedUserIds.clear()
+        notifiedUserIds.addAll(currentlyInRangeIds)
+    }
+
+    private fun checkProximity(location: LatLng, radiusKm: Float, filteredFoods: List<Food>) {
+        viewModelScope.launch {
+            checkNearbyFood(location, radiusKm, filteredFoods)
+        }
+    }
+
+    private fun checkNearbyFood(location: LatLng, radiusKm: Float, filteredFoods: List<Food>) {
+        val currentlyInRangeIds = mutableSetOf<String>()
+        val newFoodNames = mutableListOf<String>()
+
+        filteredFoods.forEach { food ->
+            val distance = Helper.calculateDistanceInKm(
+                location.latitude,
+                location.longitude,
+                food.latitude,
+                food.longitude
+            )
+
+            if (distance <= radiusKm) {
+                currentlyInRangeIds.add(food.id)
+                if (food.id !in notifiedFoodIds) {
+                    newFoodNames.add(food.name)
+                }
+            }
+        }
+
+        val hasNewFood = newFoodNames.any { it !in notifiedFoodIds }
+
+        if (hasNewFood) {
+            val title = "NOVA Hrana u blizini!"
+            val message = if (newFoodNames.size == 1) {
+                "${newFoodNames.first()} je novootkrivena u Vašem radijusu."
+            } else {
+                "Pronašli smo ${newFoodNames.size} NOVIH vrsta hrane: ${newFoodNames.joinToString(", ")}."
+            }
+
+            sendNotification(title, message)
+        }
+
+        notifiedFoodIds.clear()
+        notifiedFoodIds.addAll(currentlyInRangeIds)
+    }
+
+    private fun sendNotification(title: String, message: String) {
+        val notificationManager =
+            context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+
+        val notification = NotificationCompat.Builder(context, "proximity_channel")
+            .setSmallIcon(R.drawable.ic_launcher_foreground)
+            .setContentTitle(title)
+            .setContentText(message)
+            .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setAutoCancel(true)
+            .build()
+
+        notificationManager.notify(System.currentTimeMillis().toInt(), notification)
+    }
+
     fun updateFilterRadiusKm(newRadius: Float) {
         _filterRadiusKm.value = newRadius
+        previousLocation = null
     }
 
     fun updateFilterSettings(newSettings: FilterSettings) {
         _filterSettings.value = newSettings
+        notifiedFoodIds.clear()
+        previousLocation = null
     }
 
     fun startLocationUpdates() {
@@ -181,25 +371,13 @@ class MapViewModel(
                 _lastKnownLocation.value = LatLng(location.latitude, location.longitude)
             }
         }
+
+        startListeningToUserLocations()
     }
 
     override fun onCleared() {
         locationService.removeLocationUpdates()
+        usersLocationListener?.remove()
         super.onCleared()
     }
-}
-
-fun calculateDistanceInKm(lat1: Double, lon1: Double, lat2: Double, lon2: Double): Double {
-    val R = 6371 // Radius Zemlje u km
-
-    val latDistance = Math.toRadians(lat2 - lat1)
-    val lonDistance = Math.toRadians(lon2 - lon1)
-
-    val a = sin(latDistance / 2) * sin(latDistance / 2) +
-            cos(Math.toRadians(lat1)) * cos(Math.toRadians(lat2)) *
-            sin(lonDistance / 2) * sin(lonDistance / 2)
-
-    val c = 2 * atan2(sqrt(a), sqrt(1 - a))
-
-    return R * c
 }

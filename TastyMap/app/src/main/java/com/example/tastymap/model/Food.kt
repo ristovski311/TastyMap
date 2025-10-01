@@ -14,6 +14,7 @@ data class Food (
     val creatorId: String = "",
     val types: List<String> = emptyList(),
     val creationDate: Long = System.currentTimeMillis(),
+    val image: String? = null
 ) {
     @Exclude
     fun getLatLng() : LatLng {
