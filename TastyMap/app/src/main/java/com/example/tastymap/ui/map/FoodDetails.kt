@@ -20,6 +20,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.example.tastymap.R
 import com.example.tastymap.model.Food
+import coil.compose.AsyncImage
+import androidx.compose.ui.layout.ContentScale
 
 @Composable
 fun FoodDetailsDialog(
@@ -34,14 +36,28 @@ fun FoodDetailsDialog(
         },
         text = {
             Column(modifier = Modifier.fillMaxWidth(),horizontalAlignment = Alignment.CenterHorizontally) {
-                Image(
-                    painter = painterResource(id = R.drawable.food_placeholder),
-                    contentDescription = foodObject.name,
-                    modifier = Modifier
-                        .size(100.dp)
-                        .clip(RoundedCornerShape(8.dp))
-                        .padding(bottom = 8.dp)
-                )
+                if (!foodObject.image.isNullOrBlank()) {
+                    AsyncImage(
+                        model = foodObject.image,
+                        contentDescription = foodObject.name,
+                        modifier = Modifier
+                            .size(150.dp)
+                            .clip(RoundedCornerShape(8.dp))
+                            .padding(bottom = 8.dp),
+                        contentScale = ContentScale.Crop,
+                        error = painterResource(id = R.drawable.food_placeholder)
+                    )
+                } else {
+                    Image(
+                        painter = painterResource(id = R.drawable.food_placeholder),
+                        contentDescription = foodObject.name,
+                        modifier = Modifier
+                            .size(150.dp)
+                            .clip(RoundedCornerShape(8.dp))
+                            .padding(bottom = 8.dp),
+                        contentScale = ContentScale.Crop
+                    )
+                }
                 Text(
                     text = foodObject.description.takeIf { it.isNotBlank() } ?: "Nema opisa.",
                     style = MaterialTheme.typography.bodyMedium,

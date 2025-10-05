@@ -34,6 +34,7 @@ import androidx.compose.runtime.*
 import androidx.compose.material3.*
 import com.example.tastymap.viewmodel.FoodViewModel
 import com.example.tastymap.viewmodel.UserViewModel
+import coil.compose.AsyncImage
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -80,22 +81,40 @@ fun FoodDetailsScreen(
                     .verticalScroll(rememberScrollState())
                     .padding(padding)
             ) {
-                Image(
-                    painter = painterResource(
-                        id = if (isSystemInDarkTheme())
-                            R.drawable.food_placeholder
-                        else
-                            R.drawable.food_placeholder_light
-                    ),
-                    contentDescription = food.name,
-                    contentScale = ContentScale.Crop,
-                    modifier = Modifier
-                        .fillMaxWidth(0.9f)
-                        .height(250.dp)
-                        .clip(RoundedCornerShape(16.dp))
-                        .align(Alignment.CenterHorizontally)
-                )
-
+                if (!food.image.isNullOrBlank()) {
+                    AsyncImage(
+                        model = food.image,
+                        contentDescription = food.name,
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier
+                            .fillMaxWidth(0.9f)
+                            .height(250.dp)
+                            .clip(RoundedCornerShape(16.dp))
+                            .align(Alignment.CenterHorizontally),
+                        error = painterResource(
+                            id = if (isSystemInDarkTheme())
+                                R.drawable.food_placeholder
+                            else
+                                R.drawable.food_placeholder_light
+                        )
+                    )
+                } else {
+                    Image(
+                        painter = painterResource(
+                            id = if (isSystemInDarkTheme())
+                                R.drawable.food_placeholder
+                            else
+                                R.drawable.food_placeholder_light
+                        ),
+                        contentDescription = food.name,
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier
+                            .fillMaxWidth(0.9f)
+                            .height(250.dp)
+                            .clip(RoundedCornerShape(16.dp))
+                            .align(Alignment.CenterHorizontally)
+                    )
+                }
                 Spacer(modifier = Modifier.height(24.dp))
 
                 Text(

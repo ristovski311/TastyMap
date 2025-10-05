@@ -123,7 +123,7 @@ fun MainScreen(
             composable(NavGraph.Ranking.route) {
                 RankingScreen(
                     onNavigateToUserProfile = onNavigateToUserProfile,
-                    currentUserId = currentUser?.uid ?: ""
+                    authViewModel = authViewModel
                 )
             }
         }

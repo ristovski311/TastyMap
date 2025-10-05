@@ -17,11 +17,12 @@ import com.example.tastymap.R
 
 @Composable
 fun LoginScreen(
-    onLoginClick: (String, String) -> Unit,
+    onLoginClick: (String, String, onComplete: () -> Unit) -> Unit,
     onRegisterClick: () -> Unit,
 ) {
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
+    var isLoading by remember { mutableStateOf(false) }
 
     val scrollState = rememberScrollState()
 
@@ -46,31 +47,45 @@ fun LoginScreen(
             value = email,
             onValueChange = { email = it },
             label = { Text("Email") },
-            modifier = Modifier.fillMaxWidth()
-        );
+            modifier = Modifier.fillMaxWidth(),
+            enabled = !isLoading
+        )
         Spacer(
             modifier = Modifier.height(8.dp)
-        );
+        )
         OutlinedTextField(
             value = password,
             onValueChange = { password = it },
             label = { Text("Lozinka") },
-            modifier = Modifier.fillMaxWidth()
-        );
+            modifier = Modifier.fillMaxWidth(),
+            enabled = !isLoading
+        )
         Spacer(
             modifier = Modifier.height(8.dp)
-        );
-        Button(
-            onClick = { onLoginClick(email, password) },
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Text("Prijavi se")
-        };
+        )
+
+        if (isLoading) {
+            CircularProgressIndicator(modifier = Modifier.size(48.dp))
+        } else {
+            Button(
+                onClick = {
+                    isLoading = true
+                    onLoginClick(email, password) {
+                        isLoading = false
+                    }
+                },
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text("Prijavi se")
+            }
+        }
+
         Spacer(
             modifier = Modifier.height(8.dp)
-        );
+        )
         TextButton(
-            onClick = { onRegisterClick() }
+            onClick = { onRegisterClick() },
+            enabled = !isLoading
         ) {
             Text("Registruj se")
         }

@@ -1,14 +1,16 @@
 package com.example.tastymap.viewmodel
 
-import android.content.Context
 import androidx.lifecycle.ViewModel
 import com.example.tastymap.helper.Helper
-import com.example.tastymap.helper.Helper.showToast
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.ktx.auth
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
 import com.example.tastymap.model.User
+import com.google.firebase.auth.FirebaseUser
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 
 class AuthViewModel : ViewModel() {
     var auth: FirebaseAuth = Firebase.auth
@@ -16,9 +18,19 @@ class AuthViewModel : ViewModel() {
 
     val currentUser = auth.currentUser
 
+    private val _currentUserState = MutableStateFlow(auth.currentUser)
+    val currentUserState: StateFlow<FirebaseUser?> = _currentUserState.asStateFlow()
+
+    init {
+        auth.addAuthStateListener { firebaseAuth ->
+            _currentUserState.value = firebaseAuth.currentUser
+        }
+    }
+
     fun loginUser(email: String, password: String, onLoginSuccess: () -> Unit) {
         if(email.isBlank() || password.isBlank()) {
             Helper.showSnackbar("Molimo unesite email i lozinku!")
+            onLoginSuccess()
             return
         }
         auth.signInWithEmailAndPassword(email, password)
@@ -28,13 +40,22 @@ class AuthViewModel : ViewModel() {
                     onLoginSuccess()
                 } else {
                     Helper.showSnackbar("Neuspesan login: ${task.exception?.message}")
+                    onLoginSuccess()
                 }
             }
     }
 
-    fun registerUser(email: String, password: String, name: String, phone: String, onRegisterSuccess: () -> Unit) {
-        if(email.isBlank() || password.isBlank() || name.isBlank() || phone.isBlank()) {
+    fun registerUser(
+        email: String,
+        password: String,
+        name: String,
+        phone: String,
+        profilePictureUrl: String? = null,
+        onRegisterSuccess: () -> Unit
+    ) {
+        if (email.isBlank() || password.isBlank() || name.isBlank() || phone.isBlank()) {
             Helper.showSnackbar("Molimo unesite sve podatke!")
+            onRegisterSuccess()
             return
         }
         auth.createUserWithEmailAndPassword(email, password)
@@ -46,7 +67,7 @@ class AuthViewModel : ViewModel() {
                             "email" to email,
                             "name" to name,
                             "phone" to phone,
-                            "profilePicture" to "URL fotografije",
+                            "profilePicture" to (profilePictureUrl ?: ""),
                             "points" to 0
                         )
                         db.collection("users").document(it.uid)
@@ -57,21 +78,32 @@ class AuthViewModel : ViewModel() {
                             }
                             .addOnFailureListener { e ->
                                 Helper.showSnackbar("Neuspešna registracija: ${e.message}")
+                                onRegisterSuccess()
                             }
                     }
                 } else {
                     Helper.showSnackbar("Neuspešna registracija: ${task.exception?.message}")
+                    onRegisterSuccess()
                 }
             }
     }
 
-    fun updateUserData(name: String, phone: String, onResult: (Boolean) -> Unit) {
+    fun updateUserData(
+        name: String,
+        phone: String,
+        profilePictureUrl: String? = null,
+        onResult: (Boolean) -> Unit
+    ) {
         val user = auth.currentUser
-        if(user!=null){
+        if (user != null) {
             val userMap = hashMapOf<String, Any>(
                 "name" to name,
                 "phone" to phone
             )
+
+            profilePictureUrl?.let {
+                userMap["profilePicture"] = it
+            }
 
             db.collection("users").document(user.uid)
                 .update(userMap)
@@ -83,23 +115,20 @@ class AuthViewModel : ViewModel() {
                     Helper.showSnackbar("Greška pri ažuriranju podataka: ${e.message}")
                     onResult(false)
                 }
-        }
-        else{
+        } else {
             Helper.showSnackbar("Korisnik nije prijavljen!")
             onResult(false)
         }
     }
 
-    fun fetchCurrentUserData(onSuccess: (User) -> Unit){
+    fun fetchCurrentUserData(onSuccess: (User) -> Unit) {
         val user = auth.currentUser
-        if(user != null)
-        {
+        if (user != null) {
             db.collection("users").document(user.uid).get()
                 .addOnSuccessListener { document ->
-                    if(document.exists()){
+                    if (document.exists()) {
                         val userData = document.toObject(User::class.java)
-                        if(userData != null)
-                        {
+                        if (userData != null) {
                             onSuccess(userData)
                         }
                     }
@@ -108,8 +137,8 @@ class AuthViewModel : ViewModel() {
         }
     }
 
-    fun logout()
-    {
+    fun logout() {
         auth.signOut()
+        _currentUserState.value = null
     }
 }

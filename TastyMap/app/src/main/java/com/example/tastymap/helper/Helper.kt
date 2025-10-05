@@ -17,30 +17,78 @@ import kotlin.math.atan2
 import kotlin.math.cos
 import kotlin.math.sin
 import kotlin.math.sqrt
+import coil.ImageLoader
+import coil.request.ImageRequest
+import coil.request.SuccessResult
+import android.graphics.drawable.BitmapDrawable
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 object Helper {
 
     const val POINTS_FOR_NEW_LEVEL = 100;
 
     fun getCircularBitmap(bitmap: Bitmap): Bitmap {
-        val output = Bitmap.createBitmap(bitmap.width, bitmap.height, Bitmap.Config.ARGB_8888)
+        val size = minOf(bitmap.width, bitmap.height)
+
+        val squareBitmap = if (bitmap.width != bitmap.height) {
+            val x = (bitmap.width - size) / 2
+            val y = (bitmap.height - size) / 2
+            Bitmap.createBitmap(bitmap, x, y, size, size)
+        } else {
+            bitmap
+        }
+
+        val output = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888)
         val canvas = Canvas(output)
 
         val paint = Paint().apply {
             isAntiAlias = true
         }
-        val rect = Rect(0, 0, bitmap.width, bitmap.height)
+        val rect = Rect(0, 0, size, size)
 
         canvas.drawARGB(0, 0, 0, 0)
 
-        val radius = (bitmap.width / 2).toFloat()
+        val radius = (size / 2).toFloat()
         canvas.drawCircle(radius, radius, radius, paint)
 
         paint.xfermode = PorterDuffXfermode(PorterDuff.Mode.SRC_IN)
-
-        canvas.drawBitmap(bitmap, rect, rect, paint)
+        canvas.drawBitmap(squareBitmap, rect, rect, paint)
 
         return output
+    }
+
+    suspend fun bitmapDescriptorFromUrl(url: String, context: Context, sizeDp: Int): BitmapDescriptor? = withContext(Dispatchers.IO) {
+        try {
+            if (url.isEmpty()) return@withContext null
+
+            val density = context.resources.displayMetrics.density
+            val sizePx = (sizeDp * density).toInt()
+
+            val imageLoader = ImageLoader(context)
+            val request = ImageRequest.Builder(context)
+                .data(url)
+                .size(sizePx, sizePx)
+                .allowHardware(false)
+                .build()
+
+            val result = imageLoader.execute(request)
+
+            if (result is SuccessResult) {
+                val originalBitmap = (result.drawable as? BitmapDrawable)?.bitmap ?: return@withContext null
+
+                val scaledBitmap = Bitmap.createScaledBitmap(originalBitmap, sizePx, sizePx, true)
+
+                val circularBitmap = getCircularBitmap(scaledBitmap)
+
+                return@withContext BitmapDescriptorFactory.fromBitmap(circularBitmap)
+            }
+
+            return@withContext null
+        } catch (e: Exception) {
+            e.printStackTrace()
+            return@withContext null
+        }
     }
 
     fun bitmapDescriptorFromVector(context: Context, @DrawableRes vectorResId: Int, sizeDp: Int): BitmapDescriptor? {

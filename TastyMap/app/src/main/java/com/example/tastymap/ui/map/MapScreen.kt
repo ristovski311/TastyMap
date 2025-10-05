@@ -53,6 +53,7 @@ import com.example.tastymap.ui.food_details.FoodDetailsScreen
 import com.example.tastymap.viewmodel.FilterSettings
 import com.example.tastymap.viewmodel.NearbyUser
 import com.example.tastymap.viewmodel.UserViewModel
+import com.google.android.gms.maps.model.BitmapDescriptor
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -140,7 +141,7 @@ fun MapScreen(
         }
     }
 
-    val handleCreateFood: (String, String, List<String>) -> Unit = { name, description, types ->
+    val handleCreateFood: (String, String, List<String>, String?) -> Unit = { name, description, types, imageUrl ->
         if (state.lastKnownLocation.latitude != 0.0 && state.lastKnownLocation.longitude != 0.0) {
             val newFood = Food(
                 name = name,
@@ -148,10 +149,10 @@ fun MapScreen(
                 latitude = state.lastKnownLocation.latitude,
                 longitude = state.lastKnownLocation.longitude,
                 creatorId = mapViewModel.currentUserId,
-                types = types
+                types = types,
+                image = imageUrl
             )
             mapViewModel.saveFood(newFood)
-
             showCreationSheet = false
         }
     }
@@ -184,43 +185,66 @@ fun MapScreen(
                 state.foodObjects.forEach { food ->
                     key("${food.latitude}_${food.longitude}_${food.name}") {
                         val markerState = rememberMarkerState(position = food.getLatLng())
-                        Marker(
-                            state = markerState,
-                            title = food.name,
-                            snippet = food.description,
-                            onClick = { marker ->
-                                selectedFood = food
-                                showFoodDetailsDialog = true
-                                true
-                            },
-                            icon = Helper.bitmapDescriptorFromVector(
-                                context,
-                                R.drawable.food_placeholder,
-                                50
+                        var markerIcon by remember { mutableStateOf<BitmapDescriptor?>(null) }
+
+                        LaunchedEffect(food.image) {
+                            markerIcon = if (!food.image.isNullOrBlank()) {
+                                Helper.bitmapDescriptorFromUrl(food.image, context, 50)
+                            } else {
+                                Helper.bitmapDescriptorFromVector(
+                                    context,
+                                    R.drawable.food_placeholder,
+                                    50
+                                )
+                            }
+                        }
+
+                        if (markerIcon != null) {
+                            Marker(
+                                state = markerState,
+                                title = food.name,
+                                snippet = food.description,
+                                onClick = { marker ->
+                                    selectedFood = food
+                                    showFoodDetailsDialog = true
+                                    true
+                                },
+                                icon = markerIcon
                             )
-                        )
+                        }
                     }
                 }
 
                 state.nearbyUsers.forEach { user ->
-                    key("user_${user.id}_${user.location.latitude}_${user.location.longitude}"){
+                    key("user_${user.id}_${user.location.latitude}_${user.location.longitude}") {
                         val userMarkerState = rememberMarkerState(position = user.location)
-                        Marker(
-                            state = userMarkerState,
-                            title = user.name,
-                            snippet = "Korisnik u blizini",
-                            onClick = {
-                                marker ->
-                                selectedUser = user
-                                showUserDetailsDialog = true
-                                true
-                            },
-                            icon = Helper.bitmapDescriptorFromVector(
-                                context,
-                                R.drawable.illustration_login_light,
-                                50
+                        var markerIcon by remember { mutableStateOf<BitmapDescriptor?>(null) }
+
+                        LaunchedEffect(user.profilePicture) {
+                            markerIcon = if (user.profilePicture.isNotBlank()) {
+                                Helper.bitmapDescriptorFromUrl(user.profilePicture, context, 50)
+                            } else {
+                                Helper.bitmapDescriptorFromVector(
+                                    context,
+                                    R.drawable.profile_picture_placeholder,
+                                    50
+                                )
+                            }
+                        }
+
+                        if (markerIcon != null) {
+                            Marker(
+                                state = userMarkerState,
+                                title = user.name,
+                                snippet = "Korisnik u blizini",
+                                onClick = { marker ->
+                                    selectedUser = user
+                                    showUserDetailsDialog = true
+                                    true
+                                },
+                                icon = markerIcon
                             )
-                        )
+                        }
                     }
                 }
             }
@@ -356,8 +380,7 @@ fun MapScreen(
 
             if (showUserDetailsDialog && selectedUser != null) {
                 UserDetailsDialog(
-                    userName = selectedUser?.name ?: "",
-                    userPoints = 0,
+                    nearbyUser = selectedUser!!,
                     onDismiss = {
                         showUserDetailsDialog = false
                         selectedUser = null

@@ -37,11 +37,12 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.example.tastymap.R
+import com.example.tastymap.viewmodel.AuthViewModel
 
 @Composable
 fun RankingScreen(
     onNavigateToUserProfile: (String) -> Unit,
-    currentUserId: String
+    authViewModel: AuthViewModel
 ) {
 
     val rankingViewModel: RankingViewModel = viewModel()
@@ -49,9 +50,13 @@ fun RankingScreen(
     var users by remember { mutableStateOf<List<User>>(emptyList()) }
     var isLoading by remember { mutableStateOf(true) }
 
+    val currentUser by authViewModel.currentUserState.collectAsState()
+    val currentUserId = currentUser?.uid ?: ""
+
     val context = LocalContext.current
 
-    LaunchedEffect(Unit) {
+    LaunchedEffect(currentUserId) {
+        isLoading = true
         rankingViewModel.fetchRanking(context) { fetchedUsers ->
             users = fetchedUsers
             isLoading = false
@@ -79,7 +84,7 @@ fun RankingScreen(
                 }
             }
         } else {
-            println("🔍 RankingScreen currentUserId = '$currentUserId'")
+            println("RankingScreen currentUserId = '$currentUserId'")
             LazyColumn(
                 modifier = Modifier
                     .fillMaxSize()

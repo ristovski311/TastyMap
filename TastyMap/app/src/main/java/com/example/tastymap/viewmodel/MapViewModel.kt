@@ -11,6 +11,7 @@ import com.example.tastymap.helper.Helper
 import com.example.tastymap.model.Food
 import com.example.tastymap.services.LocationService
 import com.google.android.gms.maps.model.LatLng
+import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
@@ -25,7 +26,8 @@ data class FoodCreator(
 data class NearbyUser(
     val id: String,
     val name: String,
-    val location: LatLng
+    val location: LatLng,
+    val profilePicture: String = ""
 )
 
 data class FilterSettings(
@@ -46,7 +48,7 @@ data class MapState(
     val foodObjects: List<Food> = emptyList(),
     val nearbyUsers: List<NearbyUser> = emptyList(),
     val isTracking: Boolean = false,
-    val zoomLevel: Float = 15f,
+    val zoomLevel: Float = 18f,
     val filterRadiusKm: Float = 5.0f,
     val filterSettings: FilterSettings = FilterSettings(),
     val uniqueFoodTypes: List<String> = emptyList(),
@@ -237,7 +239,7 @@ class MapViewModel(
     }
 
     private fun updateNearbyUsersFromSnapshot(
-        documents: List<com.google.firebase.firestore.DocumentSnapshot>,
+        documents: List<DocumentSnapshot>,
         currentUserId: String
     ) {
         val currentLocation = _lastKnownLocation.value
@@ -253,6 +255,7 @@ class MapViewModel(
 
             val geoPoint = doc.getGeoPoint("lastKnownLocation") ?: return@forEach
             val userName = doc.getString("name") ?: "Korisnik"
+            val profilePicture = doc.getString("profilePicture") ?: ""
 
             val userLocation = LatLng(geoPoint.latitude, geoPoint.longitude)
 
@@ -270,7 +273,8 @@ class MapViewModel(
                     NearbyUser(
                         id = userId,
                         name = userName,
-                        location = userLocation
+                        location = userLocation,
+                        profilePicture = profilePicture
                     )
                 )
 
