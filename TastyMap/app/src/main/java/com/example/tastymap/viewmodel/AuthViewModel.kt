@@ -58,6 +58,7 @@ class AuthViewModel : ViewModel() {
             onRegisterSuccess(false)
             return
         }
+        
         auth.createUserWithEmailAndPassword(email, password)
             .addOnCompleteListener { task ->
                 if (task.isSuccessful) {
@@ -74,7 +75,7 @@ class AuthViewModel : ViewModel() {
                             .set(userData)
                             .addOnSuccessListener {
                                 Helper.showSnackbar("Uspešna registracija!")
-                                onRegisterSuccess(false)
+                                onRegisterSuccess(true)
                             }
                             .addOnFailureListener { e ->
                                 Helper.showSnackbar("Neuspešna registracija: ${e.message}")

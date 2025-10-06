@@ -2,6 +2,7 @@ package com.example.tastymap.ui.food_details
 
 import androidx.compose.runtime.Composable
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -128,6 +129,21 @@ fun FoodDetailsScreen(
                         .padding(horizontal = 16.dp)
                 )
 
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .horizontalScroll(rememberScrollState())
+                        .padding(horizontal = 16.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally)
+                ) {
+                    food.types.forEach { type ->
+                        SuggestionChip(
+                            onClick = { },
+                            label = { Text(type) }
+                        )
+                    }
+                }
+
                 Spacer(modifier = Modifier.height(16.dp))
 
                 Row(
@@ -146,7 +162,7 @@ fun FoodDetailsScreen(
                     Spacer(modifier = Modifier.width(4.dp))
                     Text(
                         text = if (state.totalRatings > 0) {
-                            "${state.averageRating} [${state.totalRatings} ocena]"
+                            "${String.format("%.1f", state.averageRating)} [${state.totalRatings} ocena]"
                         } else {
                             "Nema ocena"
                         },

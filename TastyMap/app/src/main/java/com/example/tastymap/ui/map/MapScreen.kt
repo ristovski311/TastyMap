@@ -177,7 +177,7 @@ fun MapScreen(
                 ),
                 properties = MapProperties(
                     isMyLocationEnabled = true,
-                    mapType = MapType.HYBRID
+                    mapType = MapType.NORMAL
                 ),
                 onMapLoaded = {
                     isMapLoaded = true
