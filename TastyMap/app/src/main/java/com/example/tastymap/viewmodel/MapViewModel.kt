@@ -13,10 +13,9 @@ import com.example.tastymap.services.LocationService
 import com.google.android.gms.maps.model.LatLng
 import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.ListenerRegistration
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.tasks.await
-import kotlin.math.*
 
 data class FoodCreator(
     val id: String,
@@ -88,7 +87,7 @@ class MapViewModel(
     private val _nearbyUsers = MutableStateFlow<List<NearbyUser>>(emptyList())
     private val _userNames = MutableStateFlow<Map<String, String>>(emptyMap())
 
-    private var usersLocationListener: com.google.firebase.firestore.ListenerRegistration? = null
+    private var usersLocationListener: ListenerRegistration? = null
 
     val currentUserId: String
         get() = foodRepository.getCurrentUserId()
@@ -348,7 +347,7 @@ class MapViewModel(
             context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
 
         val notification = NotificationCompat.Builder(context, "proximity_channel")
-            .setSmallIcon(R.drawable.ic_launcher_foreground)
+            .setSmallIcon(R.drawable.food_placeholder)
             .setContentTitle(title)
             .setContentText(message)
             .setPriority(NotificationCompat.PRIORITY_HIGH)

@@ -134,7 +134,7 @@ class LocationTrackingService : Service() {
         return NotificationCompat.Builder(this, CHANNEL_ID)
             .setContentTitle("TastyMap praćenje")
             .setContentText("Pratimo Vašu lokaciju...")
-            .setSmallIcon(R.drawable.ic_launcher_foreground)
+            .setSmallIcon(R.drawable.food_placeholder)
             .setPriority(NotificationCompat.PRIORITY_LOW)
             .build()
     }

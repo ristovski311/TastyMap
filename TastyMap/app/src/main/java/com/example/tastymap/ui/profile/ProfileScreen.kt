@@ -440,7 +440,7 @@ fun EditProfileDialog(
                     } else {
                         val imageToShow = selectedImageUri ?: currentUser.profilePicture
 
-                        if (imageToShow != null && imageToShow.toString().isNotEmpty()) {
+                        if (imageToShow.toString().isNotEmpty()) {
                             AsyncImage(
                                 model = imageToShow,
                                 contentDescription = "Profilna slika",

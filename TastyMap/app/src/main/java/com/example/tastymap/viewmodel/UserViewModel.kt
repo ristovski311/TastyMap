@@ -17,29 +17,24 @@ import kotlinx.coroutines.flow.asStateFlow
 
 class UserViewModel : ViewModel() {
 
-    private val firestore = FirebaseFirestore.getInstance()
-    private val auth: FirebaseAuth = Firebase.auth
-
-    init {
-        loadCurrentUserInitial()
-        loadCurrentUserName()
-    }
-
-    private val _currentUserName = MutableStateFlow<String?>(null)
-
-    val currentUserName: StateFlow<String?> = _currentUserName.asStateFlow()
-    private val _currentUser = MutableStateFlow<User?>(null)
-
-    val currentUser: StateFlow<User?> = _currentUser.asStateFlow()
-
     companion object {
         const val POINTS_CREATE_FOOD = 20
         const val POINTS_ADD_RATING = 5
         const val POINTS_ADD_COMMENT = 10
     }
 
+    private val firestore = FirebaseFirestore.getInstance()
+    private val auth: FirebaseAuth = Firebase.auth
+
+    private val _currentUser = MutableStateFlow<User?>(null)
+    val currentUser: StateFlow<User?> = _currentUser.asStateFlow()
+
+    init {
+        loadCurrentUserInitial()
+    }
+
     private fun loadCurrentUserInitial() {
-        val currentUserId = auth.currentUser?.uid
+        val currentUserId = auth.currentUser?.uid ?: null
         if (currentUserId != null) {
             fetchUserData(currentUserId) { user ->
                 _currentUser.value = user
@@ -61,15 +56,6 @@ class UserViewModel : ViewModel() {
             user
         } catch (e: Exception) {
             null
-        }
-    }
-
-    private fun loadCurrentUserName() {
-        val currentUserId = auth.currentUser?.uid
-        if (currentUserId != null) {
-            fetchUserData(currentUserId) { user ->
-                _currentUserName.value = user?.name
-            }
         }
     }
 

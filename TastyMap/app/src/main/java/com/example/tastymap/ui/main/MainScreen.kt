@@ -47,8 +47,6 @@ fun MainScreen(
 
     var showLogoutDialog by remember { mutableStateOf(false) }
 
-    val currentUser = authViewModel.currentUser
-
     fun getCurrentTitle() : String {
         return when(currentRoute){
             NavGraph.Map.route -> NavGraph.Map.title!!
@@ -115,7 +113,7 @@ fun MainScreen(
                     authViewModel = authViewModel,
                 )
             }
-            composable(NavGraph.Map.route) { MapScreen(userViewModel = userViewModel,
+            composable(NavGraph.Map.route) { MapScreen(
                 onNavigateToFoodDetails = { foodId ->
                     mainNavController.navigate("food_details/$foodId")
                 }

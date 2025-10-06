@@ -16,8 +16,6 @@ class AuthViewModel : ViewModel() {
     var auth: FirebaseAuth = Firebase.auth
     private val db = Firebase.firestore
 
-    val currentUser = auth.currentUser
-
     private val _currentUserState = MutableStateFlow(auth.currentUser)
     val currentUserState: StateFlow<FirebaseUser?> = _currentUserState.asStateFlow()
 

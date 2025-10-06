@@ -60,7 +60,6 @@ import kotlinx.coroutines.delay
 @Composable
 fun MapScreen(
     onNavigateToFoodDetails: (String) -> Unit,
-    userViewModel : UserViewModel
 ) {
 
     val context = LocalContext.current.applicationContext as Application
@@ -92,6 +91,7 @@ fun MapScreen(
             mapViewModel.startLocationUpdates()
         }
     }
+
     LaunchedEffect(Unit) {
         if (!hasLocationPermission) {
             locationPermissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
@@ -99,7 +99,6 @@ fun MapScreen(
             mapViewModel.startLocationUpdates()
         }
     }
-
 
     //Camera pomeranje prilikom load-ovanja mape
     val state by mapViewModel.state.collectAsState()

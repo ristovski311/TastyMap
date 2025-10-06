@@ -11,6 +11,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import com.example.tastymap.R
 
@@ -58,6 +59,7 @@ fun LoginScreen(
             onValueChange = { password = it },
             label = { Text("Lozinka") },
             modifier = Modifier.fillMaxWidth(),
+            visualTransformation = PasswordVisualTransformation(),
             enabled = !isLoading
         )
         Spacer(

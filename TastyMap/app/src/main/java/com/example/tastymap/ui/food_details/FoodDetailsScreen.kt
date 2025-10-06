@@ -47,7 +47,7 @@ fun FoodDetailsScreen(
 ) {
     val state by foodViewModel.state.collectAsState()
     var commentText by remember { mutableStateOf("") }
-    val currentUserName by userViewModel.currentUserName.collectAsState()
+    val currentUser by userViewModel.currentUser.collectAsState()
 
     LaunchedEffect(food.id) {
         foodViewModel.loadFoodDetails(food.id)
@@ -258,7 +258,7 @@ fun FoodDetailsScreen(
                                     foodViewModel.addComment(
                                         food.id,
                                         commentText,
-                                        currentUserName ?: "Nepoznati korisnik"
+                                        currentUser?.name ?: "Nepoznati korisnik"
                                     )
                                     commentText = ""
                                 }
