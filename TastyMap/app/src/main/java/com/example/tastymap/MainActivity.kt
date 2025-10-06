@@ -108,10 +108,12 @@ class MainActivity : ComponentActivity() {
                             composable("login_screen") {
                                 LoginScreen(
                                     onLoginClick = { email, pass, onComplete  ->
-                                        authViewModel.loginUser(email, pass) {
+                                        authViewModel.loginUser(email, pass) { success ->
                                             onComplete()
-                                            navController.navigate("main_screen") {
-                                                popUpTo("login_screen") { inclusive = true }
+                                            if(success){
+                                                navController.navigate("main_screen") {
+                                                    popUpTo("login_screen") { inclusive = true }
+                                                }
                                             }
                                         }
                                     },

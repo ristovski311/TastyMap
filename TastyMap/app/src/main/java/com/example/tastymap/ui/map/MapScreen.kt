@@ -54,6 +54,7 @@ import com.example.tastymap.viewmodel.FilterSettings
 import com.example.tastymap.viewmodel.NearbyUser
 import com.example.tastymap.viewmodel.UserViewModel
 import com.google.android.gms.maps.model.BitmapDescriptor
+import kotlinx.coroutines.delay
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -106,22 +107,22 @@ fun MapScreen(
     val cameraPositionState = rememberCameraPositionState {
         position = CameraPosition.fromLatLngZoom(state.lastKnownLocation, state.zoomLevel)
     }
-    LaunchedEffect(state.lastKnownLocation, isMapLoaded) {
-        if (isMapLoaded
-            && !hasAnimatedToUserLocation
-            && state.lastKnownLocation.latitude != 0.0
-            && state.lastKnownLocation.longitude != 0.0
+
+    LaunchedEffect(state.lastKnownLocation) {
+        if (!hasAnimatedToUserLocation
+            && state.lastKnownLocation.latitude != 43.3209
+            && state.lastKnownLocation.longitude != 21.8958
         ) {
             try {
-                var currentZoom = cameraPositionState.position.zoom
+                delay(200) //Da se saceka da se loaduje mapa i procita lokacija
                 cameraPositionState.animate(
                     update = CameraUpdateFactory.newLatLngZoom(
                         state.lastKnownLocation,
-                        if (currentZoom > 10f) currentZoom else state.zoomLevel
+                        state.zoomLevel
                     ),
-                    durationMs = 1000
+                    durationMs = 1500
                 )
-                hasAnimatedToUserLocation = true;
+                hasAnimatedToUserLocation = true
             } catch (e: Exception) {
                 println("Greska pri animaciji kamere: ${e.message}")
             }

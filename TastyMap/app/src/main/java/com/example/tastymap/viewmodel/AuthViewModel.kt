@@ -27,20 +27,20 @@ class AuthViewModel : ViewModel() {
         }
     }
 
-    fun loginUser(email: String, password: String, onLoginSuccess: () -> Unit) {
+    fun loginUser(email: String, password: String, onLoginSuccess: (Boolean) -> Unit) {
         if(email.isBlank() || password.isBlank()) {
             Helper.showSnackbar("Molimo unesite email i lozinku!")
-            onLoginSuccess()
+            onLoginSuccess(false)
             return
         }
         auth.signInWithEmailAndPassword(email, password)
             .addOnCompleteListener { task ->
                 if (task.isSuccessful) {
                     Helper.showSnackbar("Uspešna prijava.")
-                    onLoginSuccess()
+                    onLoginSuccess(true)
                 } else {
                     Helper.showSnackbar("Neuspesan login: ${task.exception?.message}")
-                    onLoginSuccess()
+                    onLoginSuccess(false)
                 }
             }
     }
@@ -51,11 +51,11 @@ class AuthViewModel : ViewModel() {
         name: String,
         phone: String,
         profilePictureUrl: String? = null,
-        onRegisterSuccess: () -> Unit
+        onRegisterSuccess: (Boolean) -> Unit
     ) {
         if (email.isBlank() || password.isBlank() || name.isBlank() || phone.isBlank()) {
             Helper.showSnackbar("Molimo unesite sve podatke!")
-            onRegisterSuccess()
+            onRegisterSuccess(false)
             return
         }
         auth.createUserWithEmailAndPassword(email, password)
@@ -74,16 +74,16 @@ class AuthViewModel : ViewModel() {
                             .set(userData)
                             .addOnSuccessListener {
                                 Helper.showSnackbar("Uspešna registracija!")
-                                onRegisterSuccess()
+                                onRegisterSuccess(false)
                             }
                             .addOnFailureListener { e ->
                                 Helper.showSnackbar("Neuspešna registracija: ${e.message}")
-                                onRegisterSuccess()
+                                onRegisterSuccess(false)
                             }
                     }
                 } else {
                     Helper.showSnackbar("Neuspešna registracija: ${task.exception?.message}")
-                    onRegisterSuccess()
+                    onRegisterSuccess(false)
                 }
             }
     }

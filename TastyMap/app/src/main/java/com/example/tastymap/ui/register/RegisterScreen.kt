@@ -225,9 +225,10 @@ fun RegisterScreen(
                         name = name,
                         phone = phone,
                         profilePictureUrl = uploadedImageUrl
-                    ) {
+                    ) { success ->
                         isRegistering = false
-                        onRegistrationSuccess()
+                        if(success)
+                            onRegistrationSuccess()
                     }
                 },
                 modifier = Modifier.fillMaxWidth(),
